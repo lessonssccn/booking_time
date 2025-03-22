@@ -1,0 +1,5 @@
+.env
+booking.db
+/env/
+/__pycache__/
+**/__pycache__/
