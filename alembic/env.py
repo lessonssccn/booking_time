@@ -4,10 +4,10 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 from alembic import context
 
-# Импортируйте ваши модели SQLAlchemy
-from database.models import Base
 from dotenv import load_dotenv
 load_dotenv()
+# Импортируйте ваши модели SQLAlchemy
+from database.models import Base
 # Настройка Alembic
 config = context.config
 
