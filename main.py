@@ -1,11 +1,12 @@
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 from dotenv import load_dotenv
+# Загружаем переменные из .env
+load_dotenv()
+
 import os
 from tg.handlers import start, button_handler
 from tg.tg_notifications import send_startup_message
 
-# Загружаем переменные из .env
-load_dotenv()
 
 # Основная функция
 def main():
