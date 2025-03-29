@@ -6,7 +6,8 @@ from alembic import context
 
 # Импортируйте ваши модели SQLAlchemy
 from database.models import Base
-
+from dotenv import load_dotenv
+load_dotenv()
 # Настройка Alembic
 config = context.config
 
