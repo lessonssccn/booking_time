@@ -1,4 +1,3 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 import datetime
 from dao.timeslot_dao import TimeslotDao 
@@ -55,12 +54,15 @@ class TimeslotRepository:
     
     async def get_list_timeslot_for_date_exlude(self, date:datetime.date, exclude_ids:List[int])->List[TimeSlotDTO]:
         async with get_session() as session:
-            list_slot = await self.timeslot_dao.find_all(session, [TimeSlot.date == date, TimeSlot.id.not_in(exclude_ids), TimeSlot.hide==False])
+            list_slot = await self.timeslot_dao.find_all(
+                session, 
+                [TimeSlot.date == date, TimeSlot.id.not_in(exclude_ids), TimeSlot.hide==False],
+                order=[TimeSlot.date.asc(), TimeSlot.time.asc()])
             return list(map(lambda slot: TimeSlotDTO.model_validate(slot), list_slot))
         
     async def get_list_timeslot_by_date(self, date:datetime.date)->List[TimeSlotDTO]:
         async with get_session() as session:
-            list_slot =  await self.timeslot_dao.find_all(session, TimeSlot.date == date)
+            list_slot =  await self.timeslot_dao.find_all(session, TimeSlot.date == date, order=TimeSlot.time.asc())
             return list(map(lambda slot: TimeSlotDTO.model_validate(slot), list_slot))
 
     async def remove_timeslot(self, slot_id:int) -> TimeSlotDTO:

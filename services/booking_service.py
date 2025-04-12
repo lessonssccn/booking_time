@@ -27,13 +27,22 @@ class BookingService:
     async def get_booking(self, booking_id:int, tg_id:int) -> BookingDTO:
         user = await self.user_repo.get_user_by_tg_id(tg_id)
         return await self.booking_repo.get_booking(booking_id, user.id)
-
-    async def get_list_booking_curday(self, booking_type:str, page:int) -> BookingPage:
+    
+    async def get_list_booking_by_date(self, date:datetime.date, booking_type:str, page:int) -> BookingPage:
         list_status = get_list_status_by_type(booking_type)
         limit, offset = get_limit_and_offset(self.page_size, page)
-        today = datetime.datetime.now().date()
-        list_booking = await self.booking_repo.get_list_booking(today, list_status, limit, offset)
+        list_booking = await self.booking_repo.get_list_booking(date, list_status, limit, offset)
         return BookingPage(items=list_booking.list_items, total=list_booking.total_count, page=page, total_page=math.ceil(list_booking.total_count/self.page_size))
+
+
+    async def get_list_booking_curday(self, booking_type:str, page:int) -> BookingPage:
+        today = datetime.datetime.now().date()
+        return await self.get_list_booking_by_date(today, booking_type, page)
+    
+    async def get_list_booking_nextday(self, booking_type:str, page:int) -> BookingPage:
+        today = datetime.datetime.now().date()
+        tomorrow = today + datetime.timedelta(days=1) 
+        return await self.get_list_booking_by_date(tomorrow, booking_type, page)
 
     async def get_all_actual_booking(self, booking_type:str, page:int) -> BookingPage:
         list_status = get_list_status_by_type(booking_type)

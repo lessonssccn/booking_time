@@ -44,6 +44,7 @@ ADMIN_ACTIONS_FUNC = {
     State.ADMIN_CANCEL_BOOKING:"admin_cancel_booking",
 
     State.ADMIN_CUR_DAY_BOOKING:"show_list_booking",
+    State.ADMIN_NEXT_DAY_BOOKING:"show_list_booking",
     State.ADMIN_ALL_LIST_BOOKING:"show_list_booking",
     State.ADMIN_BOOKING_DETAILS:"show_booking_details",
 
@@ -132,6 +133,9 @@ async def add_timeslot_select_time(update: Update, context: ContextTypes.DEFAULT
     confirm = State.ADMIN_ADD_TIMESLOT_CONFIRM
     cancel = State.ADMIN_ADD_TIMESLOT_CANCEL
     msg = TIMESLOT_CREATE_SELECT_TIME.format(date = params.date)
+    list_slot = await ServiceFactory.get_timeslot_service().get_list_timeslot_by_date(params.date)
+    if list_slot:
+        msg += TIMESLOT_ALREADY_CREATED.format(list_slot = "\n".join(map(lambda item: f"{item.time}", list_slot)))
     await show_time_picker(update, context, msg ,params.date, params.time, default, confirm, cancel)
 
 async def add_timeslot_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
@@ -201,13 +205,16 @@ async def admin_cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYP
 
 #=====================================================================================================================================
 async def show_list_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    date_range = {State.ADMIN_CUR_DAY_BOOKING:BOOKING_CUR_DATE, State.ADMIN_NEXT_DAY_BOOKING:BOOKING_NEXT_DATE, State.ADMIN_ALL_LIST_BOOKING: BOOOKING_ALL_DATE}
     if params.state == State.ADMIN_CUR_DAY_BOOKING:
         bookings = await ServiceFactory.get_booking_service().get_list_booking_curday(params.booking_type, params.page)
+    elif params.state == State.ADMIN_NEXT_DAY_BOOKING:
+        bookings = await ServiceFactory.get_booking_service().get_list_booking_nextday(params.booking_type, params.page)
     else:
         bookings = await ServiceFactory.get_booking_service().get_all_actual_booking(params.booking_type, params.page)
         
     await update.callback_query.edit_message_text(
-        ADMIN_BOOKING_LIST_CUR.format(date = datetime.datetime.now()),
+        ADMIN_BOOKING_LIST.format(date = date_range.get(params.state), actual_date = datetime.datetime.now()),
         reply_markup = create_booking_list_buttons(bookings, params.booking_type, next_state=State.ADMIN_BOOKING_DETAILS, nav_state=params.state, create_back_btn=lambda: create_back_btn(State.ADMIN_MAIN_MENU), ignore_status=True))
 
 async def show_booking_details(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):

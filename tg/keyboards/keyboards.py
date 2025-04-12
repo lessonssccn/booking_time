@@ -50,7 +50,8 @@ def get_admin_start_buttons():
          create_btn_show_calendar(UNBOOKING, State.ADMIN_UNBOOKING_DAY_SELECT_DATE)],
         [InlineKeyboardButton(BOOKING_ACTIONS, callback_data=str(State.IGNORE))],
         [create_bookings_list(State.ADMIN_CUR_DAY_BOOKING, BOOKING_CUR_DATE), 
-         create_bookings_list(State.ADMIN_ALL_LIST_BOOKING, BOOOKING_ALL_DATE)],
+         create_bookings_list(State.ADMIN_NEXT_DAY_BOOKING, BOOKING_NEXT_DATE)],
+        [create_bookings_list(State.ADMIN_ALL_LIST_BOOKING, BOOOKING_ALL_DATE)],
         [InlineKeyboardButton(USER_ACTION, callback_data=str(State.IGNORE))],
         [create_book_btn(),create_my_bookings()],
     ])
@@ -127,7 +128,7 @@ def create_calendar_buttons(actual_slots:ActualTimeslots, year:int=None, month:i
 
 def create_time_picker(date:datetime.date, time:datetime.time, default_pefix:State, confirm_prefix:State, cancel_pefix:State):
     if time is None:
-        time = datetime.time(10,0,0)
+        time = datetime.time(14,0,0)
     kb_time = TimeKeyboard(date, time, str(default_pefix), str(confirm_prefix), str(cancel_pefix), disable_prefix=str(State.IGNORE))
     return kb_time.create_time_buttons()
 

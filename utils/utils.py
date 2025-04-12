@@ -2,7 +2,9 @@ import datetime
 import os
 
 def datetime_to_str(date:datetime.datetime):
-    return datetime.datetime.strftime(date, "%Y-%m-%d %H:%M")
+    
+    return datetime.datetime.strftime(date, "%a %H:%M (%d %B %Y)")
+    # return datetime.datetime.strftime(date, "%Y-%m-%d %H:%M")
 
 def datetime_to_str_with_second(date:datetime.datetime):
     return datetime.datetime.strftime(date, "%Y-%m-%d %H:%M:%S")

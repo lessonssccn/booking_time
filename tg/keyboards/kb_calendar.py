@@ -81,6 +81,7 @@ class Calendar:
         self.callback_data_next = callback_data_next
         self.callback_data_prev = callback_data_prev
         self.additional_btns = additional_btns
+        self.month_name = ["Декабрь","Январь","Февраль","Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь","Январь"]
 
 
     def is_date_in_range(self, date):
@@ -103,13 +104,13 @@ class Calendar:
 
         # Проверка, можно ли переключиться на предыдущий месяц
         prev_date = datetime.date(prev_year, prev_month, calendar.monthrange(prev_year, prev_month)[1])
-        prev_button = InlineKeyboardButton("<<", callback_data=f"state={self.callback_data_prev}&year={prev_year}&month={prev_month}")
+        prev_button = InlineKeyboardButton(f"<< {self.month_name[prev_month]}", callback_data=f"state={self.callback_data_prev}&year={prev_year}&month={prev_month}")
         if not self.is_date_in_range(prev_date):
             prev_button = InlineKeyboardButton(" ", callback_data="0")
 
         # Проверка, можно ли переключиться на следующий месяц
         next_date = datetime.date(next_year, next_month, 1)
-        next_button = InlineKeyboardButton(">>", callback_data=f"state={self.callback_data_next}&year={next_year}&month={next_month}")
+        next_button = InlineKeyboardButton(f"{self.month_name[next_month]} >>", callback_data=f"state={self.callback_data_next}&year={next_year}&month={next_month}")
         if not self.is_date_in_range(next_date):
             next_button = InlineKeyboardButton(" ", callback_data="0")
 
@@ -124,7 +125,7 @@ class Calendar:
         keyboard = []
 
         # Заголовок с названием месяца и года
-        month_name = calendar.month_name[month]
+        month_name = self.month_name[month]
         header = f"{month_name} {year}"
         keyboard.append([InlineKeyboardButton(header, callback_data="0")])
 

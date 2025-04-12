@@ -1,7 +1,9 @@
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 from dotenv import load_dotenv
+import locale
 # Загружаем переменные из .env
 load_dotenv()
+locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
 
 import os
 from tg.handlers import start, button_handler
