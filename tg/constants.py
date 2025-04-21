@@ -70,3 +70,5 @@ ERROR_MSG = "❌ ERROR"
 ADMIN_BOOKING_LIST= "Бронирования на {date}\nактульно на {actual_date}\n🟢 - подтвержденная бронь\n🟡 - заявка не подтвержденна\n🔴 - завяка отклонена\n⚪ - отменнена пользователя\n⚫ - отмена админа"
 
 BOOKING_DETAILS_ADMIN = "🗓️ Дата {date}\n🕒 Время {time}\n👤 {name} @{username}\n🆔 tg_id = {tg_id}"
+
+SELECT_OTHER_DAY_BOOKING = "Выбирите дату 🗓️ на которую надо показать бронирования"

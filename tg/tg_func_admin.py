@@ -47,6 +47,8 @@ ADMIN_ACTIONS_FUNC = {
     State.ADMIN_NEXT_DAY_BOOKING:"show_list_booking",
     State.ADMIN_ALL_LIST_BOOKING:"show_list_booking",
     State.ADMIN_BOOKING_DETAILS:"show_booking_details",
+    State.ADMIN_SELECT_OTHER_DAY_BOOKING:"select_day",
+    State.ADMIN_OTHER_DAY_BOOKING:"show_list_booking",
 
     State.ADMIN_MAIN_MENU: "show_admin_main_menu",
 }
@@ -64,6 +66,7 @@ ADMIN_ACTIONS_NEXT_ACTION = {
 
     State.ADMIN_LOCK_DAY_SELECT_DATE: State.ADMIN_LOCK_DAY,
     State.ADMIN_UNBOOKING_DAY_SELECT_DATE: State.ADMIN_UNBOOKING_DAY_SHOW_CONFIRM_MSG,
+    State.ADMIN_SELECT_OTHER_DAY_BOOKING: State.ADMIN_OTHER_DAY_BOOKING,
 }
 
 ADMIN_ACTIONS_PREV_ACTION = {
@@ -96,6 +99,7 @@ ADMIN_ACTIONS_MSG = {
     State.ADMIN_REJECT_BOOKING: (SUCCESS_REJECT_BOOKING_FOR_CLIENT, SUCCESS_REJECT_BOOKING_FOR_ADMIN),
 
     State.ADMIN_UNBOOKING_DAY_CANCEL: UNBOOKING_DAY_CANCEL,
+    State.ADMIN_SELECT_OTHER_DAY_BOOKING: SELECT_OTHER_DAY_BOOKING,
 }
 #====================================================================================================================
 async def process_admin_action(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
@@ -205,17 +209,31 @@ async def admin_cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYP
 
 #=====================================================================================================================================
 async def show_list_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
-    date_range = {State.ADMIN_CUR_DAY_BOOKING:BOOKING_CUR_DATE, State.ADMIN_NEXT_DAY_BOOKING:BOOKING_NEXT_DATE, State.ADMIN_ALL_LIST_BOOKING: BOOOKING_ALL_DATE}
+    date_range = {
+                    State.ADMIN_CUR_DAY_BOOKING:BOOKING_CUR_DATE, 
+                    State.ADMIN_NEXT_DAY_BOOKING:BOOKING_NEXT_DATE, 
+                    State.ADMIN_ALL_LIST_BOOKING: BOOOKING_ALL_DATE,
+                    State.ADMIN_OTHER_DAY_BOOKING: params.date,
+                }
     if params.state == State.ADMIN_CUR_DAY_BOOKING:
         bookings = await ServiceFactory.get_booking_service().get_list_booking_curday(params.booking_type, params.page)
     elif params.state == State.ADMIN_NEXT_DAY_BOOKING:
         bookings = await ServiceFactory.get_booking_service().get_list_booking_nextday(params.booking_type, params.page)
+    elif params.date:
+        bookings = await ServiceFactory.get_booking_service().get_list_booking_by_date(params.date, params.booking_type, params.page)
     else:
         bookings = await ServiceFactory.get_booking_service().get_all_actual_booking(params.booking_type, params.page)
         
     await update.callback_query.edit_message_text(
         ADMIN_BOOKING_LIST.format(date = date_range.get(params.state), actual_date = datetime.datetime.now()),
-        reply_markup = create_booking_list_buttons(bookings, params.booking_type, next_state=State.ADMIN_BOOKING_DETAILS, nav_state=params.state, create_back_btn=lambda: create_back_btn(State.ADMIN_MAIN_MENU), ignore_status=True))
+        reply_markup = create_booking_list_buttons(
+            bookings, 
+            params.booking_type, 
+            next_state=State.ADMIN_BOOKING_DETAILS, 
+            nav_state=params.state, 
+            create_back_btn=lambda: create_back_btn(State.ADMIN_MAIN_MENU), 
+            ignore_status=True,
+            date=params.date))
 
 async def show_booking_details(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     booking = await ServiceFactory.get_booking_service().get_booking_by_id(params.booking_id)

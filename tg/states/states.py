@@ -60,6 +60,8 @@ class State(Enum):
     ADMIN_UNBOOKING_DAY_SHOW_CONFIRM_MSG = -30
 
     ADMIN_NEXT_DAY_BOOKING = -31
+    ADMIN_SELECT_OTHER_DAY_BOOKING = -32
+    ADMIN_OTHER_DAY_BOOKING = -33
 
     def is_admin_state(self)->bool:
         return self.value<0

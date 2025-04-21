@@ -4,6 +4,7 @@ from tg.states.states import State
 from errors.errors import ParamError
 from typing import Dict
 from utils.utils import *
+from utils.booking_status import *
 
 class Params(BaseModel):
     state:State
@@ -46,7 +47,12 @@ def convert_args_to_params(args:Dict[str,str])->Params:
             data[key] = convert_str_to_value(key, value)
         except Exception as e:
             raise ParamError(key = key, value = value)
-    return Params(**data)
+    params = Params(**data)
+    if not params.page: 
+            params.page = 0
+    if not params.booking_type:
+        params.booking_type = ACTUAL_BOOKING
+    return params
 
 def extract_callback_data(data:str)->Params:
     parts = data.split("&")
