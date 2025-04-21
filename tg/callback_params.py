@@ -30,6 +30,8 @@ def build_callback_data(**kwargs):
     return "&".join(map(lambda pair: f"{pair[0]}={convert_data_to_str_args(pair[0], pair[1])}", kwargs.items()))
 
 def convert_str_to_value(key, value):
+    if value=="None":
+        return None
     if key == "state":
         return State(int(value))
     elif key == "date":
