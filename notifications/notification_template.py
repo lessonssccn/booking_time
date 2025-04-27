@@ -1,0 +1,2 @@
+USER_BOOKING_NOTIFICATION = "У вас запланированно занятие\n🗓️ Дата: {date}\n🕒 Время: {time}"
+ADMIN_BOOKING_NOTIFICATION = "У вас запланированно занятие\n🗓️ Дата: {date}\n🕒 Время: {time}\n👤 {name} @{username}\n🆔 tg_id = {tg_id}"

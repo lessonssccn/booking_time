@@ -1,5 +1,6 @@
 .env
 booking.db
+jobs.sqlite
 /env/
 /__pycache__/
 **/__pycache__/

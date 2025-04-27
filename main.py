@@ -1,4 +1,5 @@
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
+from tg.bot_holder import BotAppHolder
 from dotenv import load_dotenv
 import locale
 # Загружаем переменные из .env
@@ -7,8 +8,7 @@ locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
 
 import os
 from tg.handlers import start, button_handler
-from tg.tg_notifications import send_startup_message
-
+from tg.general import on_startup, on_shutdown
 
 # Основная функция
 def main():
@@ -19,7 +19,9 @@ def main():
 
     # Создаем приложение и регистрируем обработчики
     # application = Application.builder().token(token).build()
-    application = Application.builder().token(token).post_init(send_startup_message).build()
+    application = Application.builder().token(token).post_init(on_startup).post_shutdown(on_shutdown).build()
+    BotAppHolder.set_app(application)
+    
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", start))
     application.add_handler(CallbackQueryHandler(button_handler))

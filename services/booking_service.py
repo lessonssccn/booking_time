@@ -3,6 +3,7 @@ from repositories.booking_repository import BookingRepository
 from repositories.user_repository import UserRepository
 from repositories.timeslot_repository import TimeslotRepository
 from repositories.day_repository import DayRepository
+from services.booking_reminder_service import BookingReminderService
 from dto.booking_models import BookingPage
 from dto.models import BookingDTO
 from utils.booking_status import get_locked_status, get_actual_status, get_list_status_by_type, get_canceled_status, can_update_status, get_admin_confirm_status, get_admin_reject_status
@@ -12,11 +13,12 @@ import math
 from typing import List
 
 class BookingService:
-    def __init__(self, booking_repo:BookingRepository, timeslot_repo:TimeslotRepository, user_repo:UserRepository, day_repo:DayRepository):
+    def __init__(self, booking_repo:BookingRepository, timeslot_repo:TimeslotRepository, user_repo:UserRepository, day_repo:DayRepository, reminder: BookingReminderService):
         self.booking_repo = booking_repo
         self.timeslot_repo = timeslot_repo
         self.user_repo = user_repo
         self.day_repo = day_repo
+        self.reminder = reminder
         self.page_size = 10
         self.days = 30
 
@@ -70,14 +72,19 @@ class BookingService:
             raise BookingError(error_code=ErrorCode.TIMESLOT_OCCUPIED_CURRENT_USER, user_id = user.id, tg_id = tg_id, timslot_id = timslot_id)
         
         booking = await self.booking_repo.add_new_booking(timslot_id, user.id)
+
         return booking
     
     async def cancel_booking(self, booking_id:int, tg_id:int|None=None, is_admin:bool=False)->BookingDTO:
         if tg_id!=None and not is_admin:
             user = await self.user_repo.get_user_by_tg_id(tg_id)
-            return await self.booking_repo.cancel_booking(booking_id, user.id, get_canceled_status(is_admin))
+            result = await self.booking_repo.cancel_booking(booking_id, user.id, get_canceled_status(is_admin))
         else:
-            return await self.booking_repo.cancel_booking(booking_id, None, get_canceled_status(is_admin))
+            result = await self.booking_repo.cancel_booking(booking_id, None, get_canceled_status(is_admin))
+
+        if result:
+            await self.reminder.remove_booking(await self.get_booking_by_id(booking_id))
+        return result
 
     async def cancel_bookings_day(self, date:datetime.date) -> List[BookingDTO]: 
         list_booking = await self.booking_repo.get_list_booking(date, get_actual_status())
@@ -90,7 +97,12 @@ class BookingService:
         booking = await self.booking_repo.get_booking_by_id(booking_id)
         if not can_update_status(booking.status):
             raise MatchBookingError(booking_id=booking_id)
-        return await self.booking_repo.update_staust_booking(booking_id, new_status)
+        result =  await self.booking_repo.update_staust_booking(booking_id, new_status)
+
+        if result and new_status == get_admin_confirm_status():
+            await self.reminder.add_booking(booking)
+           
+        return result
     
     async def confirm_booking(self, booking_id:int) -> bool:
         return await self.update_status_booking(booking_id, get_admin_confirm_status())
