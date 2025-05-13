@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 import datetime
 from dao.timeslot_dao import TimeslotDao 
 from dto.models import TimeSlotDTO
@@ -20,6 +20,18 @@ class TimeslotRepository:
             except:
                 raise BookingError(ErrorCode.ERROR_CREATE_TIMESLOT, date=date, time=time)
             
+    async def try_add_list_timeslot(self, list_slot:List[Tuple[datetime.date, datetime.time]]) -> int:
+        async with get_session_with_commit() as session:
+            result = 0
+            for date, time in list_slot:
+                try:
+                    if await self.timeslot_dao.count(session,[TimeSlot.date == date, TimeSlot.time == time]) == 0:
+                        await self.timeslot_dao.add(session, CreateTimeslot(date=date, time=time).model_dump(exclude_unset=True))
+                        result += 1
+                except:
+                    pass
+            return result
+                
     async def get_timeslot_by_id(self, timeslot_id)->TimeSlotDTO:
         async with get_session() as session:
             slot = await self.timeslot_dao.find_one(session, TimeSlot.id == timeslot_id)

@@ -2,10 +2,11 @@ from datetime import datetime
 from sqlalchemy import TIMESTAMP, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine, AsyncSession
-import os
 from errors.errors import *
 from contextlib import asynccontextmanager
-engine = create_async_engine(url=os.getenv('CONNECTION_STRING'))
+from settings.settings import settings
+
+engine = create_async_engine(url=settings.connection_string)
 async_session_maker = async_sessionmaker(engine, class_=AsyncSession)
 
 @asynccontextmanager

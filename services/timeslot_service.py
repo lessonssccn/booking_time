@@ -6,11 +6,13 @@ from repositories.booking_repository import BookingRepository
 from datetime import date, time
 from dto.timeslot_models import ActualTimeslots
 from dto.models import TimeSlotDTO
-from typing import List
+from typing import List, Tuple
 from utils.booking_status import get_locked_status
 from services.utils import get_actual_date_range
+from utils.utils import get_list_date
 from errors.errors import *
 from dto.timeslot_models import UpdateTimeslot
+from settings.settings import settings
 
 class TimeslotService:
     def __init__(self, timeslot_repo:TimeslotRepository, day_repo:DayRepository, booking_repo:BookingRepository, user_repo:UserRepository):
@@ -18,7 +20,7 @@ class TimeslotService:
         self.day_repo = day_repo
         self.booking_repo = booking_repo
         self.user_repo = user_repo
-        self.days = 30
+        self.days = settings.open_windows
 
     async def get_timeslot_by_id(self, timeslot_id:int) -> TimeSlotDTO:
         return await self.timeslot_repo.get_timeslot_by_id(timeslot_id)
@@ -66,3 +68,21 @@ class TimeslotService:
         if not await self.timeslot_repo.update_timeslot(slot_id, update_data):
             raise BookingError(ErrorCode.ERROR_UPDATE_TIMESLOT, timeslot_id = slot_id, **update_data.model_dump(exclude_unset=True))
         return slot
+    
+    def copy_slots(self, list_slot:List[TimeSlotDTO], list_date:List[datetime.date]) -> List[Tuple[datetime.date, datetime.time]]:
+        list_new_slot = []
+        date_dict = dict(zip(map(lambda d: d.weekday(), list_date),list_date))
+
+        for slot in list_slot:
+            weekday = slot.date.weekday()
+            date = date_dict.get(weekday, None)
+            if date:
+                list_new_slot.append((date, slot.time))
+
+        return list_new_slot
+
+    async def copy_range(self, date_src_start:datetime.date, date_src_end:datetime.date, date_des_start:datetime.date, date_des_end:datetime.date) -> int:
+        list_slot = await self.get_list_timeslot_date_range(date_src_start, date_src_end)
+        list_new_slot = self.copy_slots(list_slot, get_list_date(date_des_start, date_des_end))
+        return await self.timeslot_repo.try_add_list_timeslot(list_new_slot)
+

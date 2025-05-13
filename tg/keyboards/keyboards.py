@@ -3,7 +3,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from tg.keyboards.kb_calendar import Calendar
 from tg.keyboards.kb_time import TimeKeyboard
 from utils.utils import is_admin, datetime_to_str, time_to_str
-from tg.keyboards.utils import make_list_date_attribute, calc_prev_next_page
+from tg.keyboards.utils import make_list_date_attribute, calc_prev_next_page, make_list_date_attribute_date_range
 from utils.booking_status import get_status_booking_icon, get_disable_status, ACTUAL_BOOKING, ALL_BOOKING
 from dto.timeslot_models import ActualTimeslots
 from dto.models import TimeSlotDTO
@@ -12,6 +12,7 @@ from typing import List
 from tg.keyboards.kb_text import *
 from tg.states.states import State
 from tg.callback_params import Params
+from settings.settings import settings
 
 def create_back_btn(state:State):
     params = Params(state=state)
@@ -38,6 +39,9 @@ def create_btn_show_calendar(text, state:State):
     now = datetime.datetime.now()
     return InlineKeyboardButton(text, callback_data=str(Params(state=state, year=now.year, month=now.month)))
 
+def create_btn_copy_schedule(text, state:State):
+    return InlineKeyboardButton(text, callback_data=str(Params(state=state)))
+
 def get_admin_start_buttons():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton(SLOT_ACTIONS, callback_data=str(State.IGNORE))],
@@ -45,9 +49,10 @@ def get_admin_start_buttons():
          create_btn_show_calendar(REMOVE_SLOT, State.ADMIN_REMOVE_TIMESLOT_SELECT_DATE)],
         [create_btn_show_calendar(LOCK, State.ADMIN_LOCK_TIMESLOT_SELECT_DATE), 
          create_btn_show_calendar(HIDE, State.ADMIN_HIDE_TIMESLOT_SELECT_DATE)],
-        [InlineKeyboardButton(DAY_ACTIONS, callback_data=str(State.IGNORE))],
+        [InlineKeyboardButton(SCHEDULE_ACTIONS, callback_data=str(State.IGNORE))],
         [create_btn_show_calendar(LOCK_DAY, State.ADMIN_LOCK_DAY_SELECT_DATE), 
          create_btn_show_calendar(UNBOOKING, State.ADMIN_UNBOOKING_DAY_SELECT_DATE)],
+        [create_btn_copy_schedule(COPY_SCHEDULE, State.ADMIN_COPY_SCHEDULE_SELECT_DAY_ON_SRC_WEEK)],
         [InlineKeyboardButton(BOOKING_ACTIONS, callback_data=str(State.IGNORE))],
         [create_bookings_list(State.ADMIN_CUR_DAY_BOOKING, BOOKING_CUR_DATE), 
          create_bookings_list(State.ADMIN_NEXT_DAY_BOOKING, BOOKING_NEXT_DATE)],
@@ -106,16 +111,16 @@ def create_booking_list_buttons(bookings:BookingPage, booking_type:str=ACTUAL_BO
     return InlineKeyboardMarkup(list_btn)
 
 
-def create_calendar_buttons(actual_slots:ActualTimeslots, year:int=None, month:int=None, selct_state:State = State.USER_SHOW_TIMESLOTS, nav_state:State = State.USER_SHOW_CALENDAR, is_admin:bool=False):
+def create_calendar_buttons(actual_slots:ActualTimeslots, year:int=None, month:int=None, next_state:State = State.USER_SHOW_TIMESLOTS, nav_state:State = State.USER_SHOW_CALENDAR, is_admin:bool=False):
     additional_btns = []
     if not is_admin:
         additional_btns.append(create_my_bookings())
 
     cal = Calendar(actual_slots.min_date, 
                    actual_slots.max_date, 
-                   callback_data_default_prefix=str(selct_state),
-                   callback_data_next=str(nav_state),
-                   callback_data_prev=str(nav_state),
+                   callback_data_default_prefix = lambda date: f"state={next_state}&date={date}",
+                   callback_data_next = lambda year_next, month_next : f"state={nav_state}&year={year_next}&month={month_next}",
+                   callback_data_prev = lambda year_prev, month_prev : f"state={nav_state}&year={year_prev}&month={month_prev}",
                    date_attributes=make_list_date_attribute(actual_slots.list_locked_day, actual_slots.list_timeslot, is_admin), 
                    additional_btns = additional_btns)
     
@@ -127,9 +132,36 @@ def create_calendar_buttons(actual_slots:ActualTimeslots, year:int=None, month:i
 
     return cal.create_calendar_buttons(year, month)
 
+def create_calendar_range_buttons(year:int, month:int, next_state:State, nav_state:State, set_date=None):
+
+    new = datetime.datetime.now()
+    date_start = set_date if set_date else (new - datetime.timedelta(days=settings.day_before)).date()
+    date_end = (new + datetime.timedelta(days=settings.day_after)).date()
+
+    if set_date==None:
+        callback = lambda date: f"state={next_state}&date={date}" 
+    else:
+        callback = lambda date: f"state={next_state}&date={set_date}&date2={date}"
+
+    cal = Calendar(date_start, 
+                   date_end, 
+                   callback_data_default_prefix = callback,
+                   callback_data_next = lambda year_next, month_next : f"state={nav_state}&year={year_next}&month={month_next}",
+                   callback_data_prev = lambda year_prev, month_prev : f"state={nav_state}&year={year_prev}&month={month_prev}",
+                   date_attributes = make_list_date_attribute_date_range(date_start, date_end, set_date), 
+                   additional_btns = [])
+    
+    if year is None:
+        year = new.year
+
+    if month is None:
+        month = new.month
+
+    return cal.create_calendar_buttons(year, month)
+
 def create_time_picker(date:datetime.date, time:datetime.time, default_pefix:State, confirm_prefix:State, cancel_pefix:State):
     if time is None:
-        time = datetime.time(14,0,0)
+        time = settings.add_slot_start_time
     kb_time = TimeKeyboard(date, time, str(default_pefix), str(confirm_prefix), str(cancel_pefix), disable_prefix=str(State.IGNORE))
     return kb_time.create_time_buttons()
 

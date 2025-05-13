@@ -1,19 +1,15 @@
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
-from tg.bot_holder import BotAppHolder
-from dotenv import load_dotenv
 import locale
-# Загружаем переменные из .env
-load_dotenv()
-locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
-
-import os
+from settings.settings import settings
+from tg.bot_holder import BotAppHolder
 from tg.handlers import start, button_handler
 from tg.general import on_startup, on_shutdown
 
+locale.setlocale(locale.LC_TIME, settings.bot_locale)
 # Основная функция
 def main():
     # Чтение токена из .env
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    token = settings.telegram_bot_token
     if not token:
         raise ValueError("Токен не найден в .env файле. Убедитесь, что переменная TELEGRAM_BOT_TOKEN задана.")
 

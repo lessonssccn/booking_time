@@ -43,6 +43,12 @@ DAY_LOCKED = "✅ День 🔒 заблокирован\n🗓️ Дата: {dat
 DAY_UNLOCKED = "✅ День 🔓 разблокирован\n🗓️ Дата: {date}\n"
 DAY_NOT_LOCKED = "❌ Не удалось заблокировать/разблокировать день\n🗓️ Дата: {date}"
 
+SELECT_DAY_ON_SRC_WEEK = "Выберите день 🗓️, на неделе, которую надо скопировать\n🟥 - выбранный день\n\n🟨 - текущая неделя\n\n🟧 - прошлая неделя\n\n🟪 - будущая неделя"
+SELECT_DAY_ON_DES_WEEK = "Выберите день🗓️, на неделе, куда надо скопировать слоты\n🟥 - выбранный день\n\n🟨 - текущая неделя\n\n🟧 - прошлая неделя\n\n🟪 - будущая неделя"
+CONFIRM_MSG_COPY_SCHEDULE = "Копировать расписание\n🗓️ {date_src_start} - {date_src_end}\n🗓️ {date_des_start} - {date_des_end}"
+COPY_SCHEDULE_CANCEL = "✋ Копирование расписания отменено"
+COPY_SCHEDULE_RESULT = "Копировать расписание\n🗓️ {date_src_start} - {date_src_end}\n🗓️ {date_des_start} - {date_des_end}\nБыло скопированно {count} слотов"
+
 CHOOSE_DATE_ADD_SLOT = "На какую дату 🗓️ создать слот:"
 CHOOSE_DATE_REMOVE_SLOT = "C какой даты 🗓️ удалить слот слот:"
 CHOOSE_DATE_LOCK_SLOT = "На какую дату 🗓️ заблокировать слот:"

@@ -10,6 +10,7 @@ from tg.tg_notifications import send_notification_to_channel, send_msg_to_client
 from services.service_factory import ServiceFactory
 from tg.callback_params import Params   
 from tg.states.states import State
+from settings.settings import settings
 
 ADMIN_ACTIONS_FUNC = {
     State.ADMIN_ADD_TIMESLOT_SELECT_DATE:"select_day",
@@ -39,6 +40,12 @@ ADMIN_ACTIONS_FUNC = {
     State.ADMIN_UNBOOKING_DAY_CONFIRM: "process_unbooking_day",
     State.ADMIN_UNBOOKING_DAY_CANCEL: "action_cancel",
 
+    State.ADMIN_COPY_SCHEDULE_SELECT_DAY_ON_SRC_WEEK: "select_range_day",
+    State.ADMIN_COPY_SCHEDULE_SELECT_DAY_ON_DES_WEEK: "select_range_day",
+    State.ADMIN_COPY_SCHEDULE_SHOW_CONFIRM_MSG: "show_confirm_copy_schedule",
+    State.ADMIN_COPY_SCHEDULE_CONFIRM: "process_copy_schedule",
+    State.ADMIN_COPY_SCHEDULE_CANCEL: "action_cancel",
+
     State.ADMIN_CONFIRM_BOOKING:"admin_confirm_reject_booking",
     State.ADMIN_REJECT_BOOKING:"admin_confirm_reject_booking",
     State.ADMIN_CANCEL_BOOKING:"admin_cancel_booking",
@@ -67,6 +74,9 @@ ADMIN_ACTIONS_NEXT_ACTION = {
     State.ADMIN_LOCK_DAY_SELECT_DATE: State.ADMIN_LOCK_DAY,
     State.ADMIN_UNBOOKING_DAY_SELECT_DATE: State.ADMIN_UNBOOKING_DAY_SHOW_CONFIRM_MSG,
     State.ADMIN_SELECT_OTHER_DAY_BOOKING: State.ADMIN_OTHER_DAY_BOOKING,
+
+    State.ADMIN_COPY_SCHEDULE_SELECT_DAY_ON_SRC_WEEK: State.ADMIN_COPY_SCHEDULE_SELECT_DAY_ON_DES_WEEK,
+    State.ADMIN_COPY_SCHEDULE_SELECT_DAY_ON_DES_WEEK: State.ADMIN_COPY_SCHEDULE_SHOW_CONFIRM_MSG,
 }
 
 ADMIN_ACTIONS_PREV_ACTION = {
@@ -95,11 +105,16 @@ ADMIN_ACTIONS_MSG = {
     State.ADMIN_LOCK_DAY_SELECT_DATE: DAY_LOCKE_SELECT,
     State.ADMIN_UNBOOKING_DAY_SELECT_DATE: DAY_UNBOOKING,
 
+    State.ADMIN_COPY_SCHEDULE_CANCEL: COPY_SCHEDULE_CANCEL,
+
     State.ADMIN_CONFIRM_BOOKING: (SUCCESS_CONFIRM_BOOKING_FOR_CLIENT, SUCCESS_CONFIRM_BOOKING_FOR_ADMIN),
     State.ADMIN_REJECT_BOOKING: (SUCCESS_REJECT_BOOKING_FOR_CLIENT, SUCCESS_REJECT_BOOKING_FOR_ADMIN),
 
     State.ADMIN_UNBOOKING_DAY_CANCEL: UNBOOKING_DAY_CANCEL,
     State.ADMIN_SELECT_OTHER_DAY_BOOKING: SELECT_OTHER_DAY_BOOKING,
+
+    State.ADMIN_COPY_SCHEDULE_SELECT_DAY_ON_SRC_WEEK: SELECT_DAY_ON_SRC_WEEK,
+    State.ADMIN_COPY_SCHEDULE_SELECT_DAY_ON_DES_WEEK: SELECT_DAY_ON_DES_WEEK,
 }
 #====================================================================================================================
 async def process_admin_action(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
@@ -119,6 +134,11 @@ async def select_day(update: Update, context: ContextTypes.DEFAULT_TYPE, params:
     msg = ADMIN_ACTIONS_MSG.get(params.state, ERROR_MSG)
     next_action = ADMIN_ACTIONS_NEXT_ACTION[params.state]
     await show_calendar_admin(update, context, msg, next_action, params)
+
+async def select_range_day(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    msg = ADMIN_ACTIONS_MSG.get(params.state, ERROR_MSG)
+    next_action = ADMIN_ACTIONS_NEXT_ACTION[params.state]
+    await show_range_calendar_admin(update, context, msg, next_action, params)
 
 async def select_slot(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     msg = ADMIN_ACTIONS_MSG.get(params.state, ERROR_MSG).format(date=params.date)
@@ -257,12 +277,54 @@ async def process_unbooking_day(update: Update, context: ContextTypes.DEFAULT_TY
         await show_admin_msg(update, context, msg_admin)
 
 #==========================================================================================================================
+async def show_confirm_copy_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    callback_data_confirm = str(Params(state=State.ADMIN_COPY_SCHEDULE_CONFIRM, date=params.date, date2=params.date2))
+    callback_data_cancel = str(Params(state=State.ADMIN_COPY_SCHEDULE_CANCEL, date=params.date))
+    
+    date_src_start = date_to_str(get_monday(params.date))
+    date_src_end = date_to_str(get_sunday(params.date))
+
+    date_des_start = date_to_str(get_monday(params.date2))
+    date_des_end = date_to_str(get_sunday(params.date2))
+    
+    msg = CONFIRM_MSG_COPY_SCHEDULE.format(date_src_start = date_src_start, 
+                                           date_src_end = date_src_end, 
+                                           date_des_start = date_des_start, 
+                                           date_des_end = date_des_end)
+    
+    await show_confirm_msg(update, context, msg, callback_data_confirm, callback_data_cancel)
+
+async def process_copy_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    date_src_start = get_monday(params.date)
+    date_src_end = get_sunday(params.date)
+
+    date_des_start = get_monday(params.date2)
+    date_des_end = get_sunday(params.date2)
+
+    count_new_slot = await ServiceFactory.get_timeslot_service().copy_range(date_src_start, date_src_end, date_des_start, date_des_end)
+
+    await show_admin_msg(update, context, COPY_SCHEDULE_RESULT.format(date_src_start = date_to_str(date_src_start), 
+                                           date_src_end = date_to_str(date_src_end), 
+                                           date_des_start = date_to_str(date_des_start), 
+                                           date_des_end = date_to_str(date_des_end),
+                                           count = count_new_slot))
+
+#==========================================================================================================================
 async def show_admin_msg(update: Update, context: ContextTypes.DEFAULT_TYPE, msg: str):
     await update.callback_query.edit_message_text(msg, reply_markup=get_admin_start_buttons())
 
 async def show_calendar_admin(update: Update, context: ContextTypes.DEFAULT_TYPE, msg:str, next_state: State, params:Params):
     actual_slots = await ServiceFactory.get_timeslot_service().get_actual_timeslots()
-    kb = create_calendar_buttons(actual_slots,  year=params.year, month=params.month, selct_state=next_state, nav_state=params.state, is_admin = True)
+    kb = create_calendar_buttons(actual_slots,  
+                                 year=params.year, 
+                                 month=params.month, 
+                                 next_state=next_state, 
+                                 nav_state=params.state, 
+                                 is_admin = True)
+    await update.callback_query.edit_message_text(msg, reply_markup = kb) 
+
+async def show_range_calendar_admin(update: Update, context: ContextTypes.DEFAULT_TYPE, msg:str, next_state: State, params:Params):
+    kb = create_calendar_range_buttons(params.year, params.month, next_state, params.state, set_date=params.date)
     await update.callback_query.edit_message_text(msg, reply_markup = kb) 
 
 async def show_list_timeslot_admin(update: Update, context: ContextTypes.DEFAULT_TYPE, date: datetime.date, text: str, next_state: State, back_state:State):

@@ -11,6 +11,7 @@ class Params(BaseModel):
     slot_id:int|None = None
     booking_id:int|None = None
     date:datetime.date|None = None
+    date2:datetime.date|None = None
     time:datetime.time|None = None
     year:int|None = None
     month:int|None = None
@@ -34,7 +35,7 @@ def convert_str_to_value(key, value):
         return None
     if key == "state":
         return State(int(value))
-    elif key == "date":
+    elif key == "date" or key == "date2":
         return conver_str_to_date(value)
     elif key == "time":
         return conver_str_to_time(value)
@@ -65,6 +66,5 @@ def extract_callback_data(data:str)->Params:
             raise ParamError(data=data, part = item)
         args[pair[0]] = pair[1]
     return convert_args_to_params(args)
-
 
 
