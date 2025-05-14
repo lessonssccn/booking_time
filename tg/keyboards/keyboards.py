@@ -138,16 +138,19 @@ def create_calendar_range_buttons(year:int, month:int, next_state:State, nav_sta
     date_start = set_date if set_date else (new - datetime.timedelta(days=settings.day_before)).date()
     date_end = (new + datetime.timedelta(days=settings.day_after)).date()
 
+    nav_callback_set_date = ""
+
     if set_date==None:
         callback = lambda date: f"state={next_state}&date={date}" 
     else:
         callback = lambda date: f"state={next_state}&date={set_date}&date2={date}"
+        nav_callback_set_date += f"&date={set_date}"
 
     cal = Calendar(date_start, 
                    date_end, 
                    callback_data_default_prefix = callback,
-                   callback_data_next = lambda year_next, month_next : f"state={nav_state}&year={year_next}&month={month_next}",
-                   callback_data_prev = lambda year_prev, month_prev : f"state={nav_state}&year={year_prev}&month={month_prev}",
+                   callback_data_next = lambda year_next, month_next : f"state={nav_state}&year={year_next}&month={month_next}" + nav_callback_set_date,
+                   callback_data_prev = lambda year_prev, month_prev : f"state={nav_state}&year={year_prev}&month={month_prev}" + nav_callback_set_date,
                    date_attributes = make_list_date_attribute_date_range(date_start, date_end, set_date), 
                    additional_btns = [])
     
