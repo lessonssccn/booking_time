@@ -1,5 +1,8 @@
 from telegram.ext import Application 
 from telegram.constants import ParseMode
+from dto.models import UserDTO
+from typing import List
+from settings.settings import settings
 
 class NotificationService:
     def __init__(self, app:Application):
@@ -7,4 +10,15 @@ class NotificationService:
     
     async def send_message(self, chat_id: int, text: str, reply_markup=None, parse_mode = None) -> None:
         """Отправляет сообщение в указанный чат."""
-        await self.app.bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup, parse_mode = parse_mode)
+        try:
+            await self.app.bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup, parse_mode = parse_mode)
+        except Exception as e:
+            try:
+                error_msg = f"Notification error\nchat_id = {chat_id}\nerror = {e}"
+                self.app.bot.send_message(chat_id = settings.admin_id, text=error_msg)
+            except:
+                print(f"Error send notification")
+
+    async def send_message_to_users(self, list_user:List[UserDTO], text: str, reply_markup=None, parse_mode = None) -> None:
+        for user in list_user:
+            await self.send_message(user.tg_id, text, reply_markup=reply_markup, parse_mode=parse_mode)

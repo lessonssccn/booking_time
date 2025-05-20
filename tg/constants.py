@@ -78,3 +78,7 @@ ADMIN_BOOKING_LIST= "Бронирования на {date}\nактульно на
 BOOKING_DETAILS_ADMIN = "🗓️ Дата {date}\n🕒 Время {time}\n👤 {name} @{username}\n🆔 tg_id = {tg_id}"
 
 SELECT_OTHER_DAY_BOOKING = "Выбирите дату 🗓️ на которую надо показать бронирования"
+
+SHOW_SETTINGS_MSG = "Здесь вы можете изменить настройки своего профиля"
+
+SHOW_REMINDE_SETTINGS_MSG = "🟢 - напоминание включенно\n🔴 - напоминание выключенно"

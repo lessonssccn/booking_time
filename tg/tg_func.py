@@ -21,6 +21,10 @@ USER_ACTIONS = {
     State.USER_UNBOOKING: "unbooking",
     State.USER_SHOW_LIST_MY_BOOKING: "show_list_my_booking",
     State.USER_BOOKING_DETAILS: "show_booking_details",
+    State.USER_SHOW_SETTINGS: "show_settings",
+    State.USER_SHOW_START_MENU: "show_start_menu",
+    State.USER_SHOW_REMINDE_SETTINGS: "show_reminde_settings",
+    State.USER_TOGGLE_REMINDE_INACTIVE: "toggle_reminde_inactive",
 }
 
 async def process_start_msg(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -124,3 +128,16 @@ async def unbooking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:P
                                                    reply_markup=create_start_keyboard(tg_id))
     await send_notification_to_channel(update, context, SUCCESS_UNBOOKING_CHANNAL_MSG.format(date=date, time=time))
 
+async def show_settings(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    await update.callback_query.edit_message_text(SHOW_SETTINGS_MSG, reply_markup=create_settings_kb())
+
+async def show_start_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    await update.callback_query.edit_message_text(FIRST_MSG, reply_markup=create_start_keyboard(update.effective_user.id))
+
+async def show_reminde_settings(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    user = await ServiceFactory.get_user_service().get_user_by_tg_id(update.effective_user.id)
+    await update.callback_query.edit_message_text(SHOW_REMINDE_SETTINGS_MSG, reply_markup=create_reminde_settings_kb(user))
+
+async def toggle_reminde_inactive(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    user = await ServiceFactory.get_user_service().update_user_reminde_inactive(update.effective_user.id, params.data)
+    await update.callback_query.edit_message_text(SHOW_REMINDE_SETTINGS_MSG, reply_markup=create_reminde_settings_kb(user))

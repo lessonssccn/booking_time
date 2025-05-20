@@ -17,10 +17,15 @@ CONFIRM_BOOKING_ADMIN = "🟢 Подтвердить"
 REJECT_BOOKING_ADMIN = "🔴 Отказать"
 DELAY_BOOKING_ADMIN = "✋ Отложить"
 
-SIGN_UP = "Записаться"
+SIGN_UP = "📝 Записаться"
 OTHER_DATE = "Другой день"
-MY_BOOKING = "Мои бронирования"
-BACK = "Назад"
+MY_BOOKING = "📋 Мои бронирования"
+BACK = "🔙 Назад"
+SETTINGS = "⚙️ Настройки"
+REMIND_SETTINGS = "🔔 Напоминания"
+REMIND_INACTIVE_ON = "🟢 Нет записи"
+REMIND_INACTIVE_OFF = "🔴 Нет записи"
+
 
 #admin
 SLOT_ACTIONS = "🕒 Слоты"

@@ -3,10 +3,12 @@ from telegram.constants import ParseMode
 from utils.utils import *
 from tg.constants import BOT_START_NOTIFICATION
 from scheduler.scheduler_holder import SchedulerHolder
+from reminder.daily_reminder import restart_reminder
 
 async def on_startup(application: Application):
     try:
         SchedulerHolder.init_scheduler()
+        await restart_reminder()
 
         channel_id = get_channel_id()
         if not channel_id:

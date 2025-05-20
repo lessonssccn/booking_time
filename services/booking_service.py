@@ -5,12 +5,13 @@ from repositories.timeslot_repository import TimeslotRepository
 from repositories.day_repository import DayRepository
 from services.booking_reminder_service import BookingReminderService
 from dto.booking_models import BookingPage
-from dto.models import BookingDTO
+from dto.models import BookingDTO, UserDTO
 from utils.booking_status import get_locked_status, get_actual_status, get_list_status_by_type, get_canceled_status, can_update_status, get_admin_confirm_status, get_admin_reject_status
 from errors.errors import *
 from services.utils import get_limit_and_offset, get_actual_date_range
 import math
 from typing import List
+from settings.settings import settings
 
 class BookingService:
     def __init__(self, booking_repo:BookingRepository, timeslot_repo:TimeslotRepository, user_repo:UserRepository, day_repo:DayRepository, reminder: BookingReminderService):
@@ -61,7 +62,6 @@ class BookingService:
         list_booking = await self.booking_repo.get_list_booking_for_user_by_date_range(user.id, list_status, min_date, max_date, limit, offset)
         return BookingPage(items=list_booking.list_items, total=list_booking.total_count, page=page, total_page=math.ceil(list_booking.total_count/self.page_size))
 
-
     async def booking(self, timslot_id:int, tg_id:int) -> BookingDTO:
         if await self.booking_repo.exsist_booking(timslot_id, get_locked_status()):
             raise BookingError(error_code=ErrorCode.TIMESLOT_OCCUPIED, timslot_id=timslot_id)
@@ -110,5 +110,10 @@ class BookingService:
     async def reject_booking(self, booking_id:int) -> bool:
         return await self.update_status_booking(booking_id, get_admin_reject_status())
 
-    
-    
+    async def get_inactive_users_missing_future_bookings(self)->List[UserDTO]:
+        now = datetime.datetime.now()
+        future = (now + datetime.timedelta(days=settings.day_before_future_booking)).date()
+        before = (now - datetime.timedelta(days=settings.day_after_last_active)).date()
+        yesterday = ((now - datetime.timedelta(days=1)).date()) 
+
+        return await self.booking_repo.find_reminde_users_with_appointments_in_period_a_but_not_in_b(before, yesterday, get_actual_status(), now.date(), future, get_actual_status())

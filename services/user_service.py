@@ -1,6 +1,6 @@
 from repositories.user_repository import UserRepository
 from dto.models import UserDTO
-from dto.tg_models import CreateUserTG
+from dto.tg_models import CreateUserTG, UpdateUser
 
 class UserService:
     def __init__(self, user_repo:UserRepository):
@@ -11,3 +11,9 @@ class UserService:
         if not user:
             user = await self.user_repo.add_tg_user(CreateUserTG(tg_id=tg_id, username=username, first_name=first_name, last_name=last_name))
         return user
+    
+    async def get_user_by_tg_id(self, tg_id:int)->UserDTO:
+        return await self.user_repo.get_user_by_tg_id(tg_id)
+    
+    async def update_user_reminde_inactive(self, tg_id:int, reminde:int) -> UserDTO:
+        return await self.user_repo.update_user_by_tg_id(tg_id, UpdateUser(remind_inactive=reminde))

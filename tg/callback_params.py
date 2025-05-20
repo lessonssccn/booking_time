@@ -18,6 +18,7 @@ class Params(BaseModel):
     booking_type:str|None = None
     page:int|None = None
     confirm:int|None = None
+    data:int|None = None
 
     def __str__(self):
         return build_callback_data(**self.model_dump(exclude_unset=True))

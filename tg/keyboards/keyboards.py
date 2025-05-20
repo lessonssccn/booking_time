@@ -6,7 +6,7 @@ from utils.utils import is_admin, datetime_to_str, time_to_str
 from tg.keyboards.utils import make_list_date_attribute, calc_prev_next_page, make_list_date_attribute_date_range
 from utils.booking_status import get_status_booking_icon, get_disable_status, ACTUAL_BOOKING, ALL_BOOKING
 from dto.timeslot_models import ActualTimeslots
-from dto.models import TimeSlotDTO
+from dto.models import TimeSlotDTO, UserDTO
 from dto.booking_models import BookingPage
 from typing import List
 from tg.keyboards.kb_text import *
@@ -21,6 +21,24 @@ def create_back_btn(state:State):
 def create_book_btn():
     return create_btn_show_calendar(SIGN_UP, State.USER_SHOW_CALENDAR)
 
+def create_settings_kb():
+    kb = [
+            [InlineKeyboardButton(REMIND_SETTINGS, callback_data=str(Params(state=State.USER_SHOW_REMINDE_SETTINGS)))],
+            [InlineKeyboardButton(BACK, callback_data=str(Params(state=State.USER_SHOW_START_MENU)))]
+        ]
+    return InlineKeyboardMarkup(kb)
+
+def create_reminde_settings_kb(user:UserDTO):
+    text = REMIND_INACTIVE_ON if user.remind_inactive else REMIND_INACTIVE_OFF
+    kb = [
+            [InlineKeyboardButton(text, callback_data=str(Params(state=State.USER_TOGGLE_REMINDE_INACTIVE, data=(not user.remind_inactive))))],
+            [InlineKeyboardButton(BACK, callback_data=str(Params(state=State.USER_SHOW_SETTINGS)))]
+        ]
+    return InlineKeyboardMarkup(kb)
+
+def create_settings_btn():
+    return InlineKeyboardButton(SETTINGS, callback_data=str(Params(state=State.USER_SHOW_SETTINGS)))
+
 def create_bookings_list(state:State, text:str, booking_type:str=ACTUAL_BOOKING, page:int=0):
     params = Params(state=state, booking_type = booking_type, page=page)
     return InlineKeyboardButton(text, callback_data=str(params))
@@ -33,7 +51,7 @@ def create_list_booking_btn(state:State, text:str, booking_type:str, page:int=0,
     return InlineKeyboardButton(text, callback_data=str(params))
 
 def get_user_start_buttons():
-    return InlineKeyboardMarkup([[create_book_btn()],[create_my_bookings()],])
+    return InlineKeyboardMarkup([[create_book_btn()],[create_my_bookings()],[create_settings_btn()]])
 
 def create_btn_show_calendar(text, state:State):
     now = datetime.datetime.now()
@@ -59,7 +77,9 @@ def get_admin_start_buttons():
         [create_btn_show_calendar(BOOOKING_OTHER_DATE, State.ADMIN_SELECT_OTHER_DAY_BOOKING),
          create_bookings_list(State.ADMIN_ALL_LIST_BOOKING, BOOOKING_ALL_DATE)],
         [InlineKeyboardButton(USER_ACTION, callback_data=str(State.IGNORE))],
-        [create_book_btn(),create_my_bookings()],
+        [create_book_btn()],
+        [create_my_bookings()], 
+        [create_settings_btn()],
     ])
 
 def create_start_keyboard(user_id):

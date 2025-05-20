@@ -11,6 +11,7 @@ class UserDTO(BaseModel):
     last_name: str | None
     lock_at: datetime | None
     reserve: float
+    remind_inactive:bool
     created_at:datetime
     updated_at:datetime
 
