@@ -6,6 +6,7 @@ from typing import List
 from notifications.notification_func import create_user_notification_booking_msg, create_admin_notification_booking_msg
 from utils.utils import get_channel_id
 import datetime
+from settings.settings import settings
 
 class BookingReminderService:
     def __init__(self, scheduler_service: SchedulerService, reminder_offsets_minutes:List[int]=[60,15,5]):
@@ -27,7 +28,7 @@ class BookingReminderService:
             await self.add_reminder(booking.id, booking.date, chat_id, create_admin_notification_booking_msg(booking))
 
     async def add_reminder_for_user(self, booking:BookingDTO):
-        await self.add_reminder(booking.id, booking.date, booking.user.tg_id, create_user_notification_booking_msg(booking))
+        await self.add_reminder(booking.id, booking.date, booking.user.tg_id, create_user_notification_booking_msg(booking), booking.user.reminder_minutes_before)
 
     async def remove_reminder_for_channel(self, booking:BookingDTO):
         chat_id = get_channel_id()
@@ -37,14 +38,17 @@ class BookingReminderService:
     async def remove_reminder_for_user(self, booking:BookingDTO):
         await self.remove_reminder(booking.id, booking.user.tg_id)
 
-    async def add_reminder(self, booking_id:int, booking_time:datetime.datetime,chat_id:int, text:str):
-        for offset in self.reminder_offsets_minutes:
+    async def add_reminder(self, booking_id:int, booking_time:datetime.datetime, chat_id:int, text:str, reminder_offsets_minutes=None):
+        if reminder_offsets_minutes == None:
+            reminder_offsets_minutes = self.reminder_offsets_minutes
+
+        for offset in reminder_offsets_minutes:
             job_id = self.template_job_id.format(to=chat_id, id = booking_id, offset = offset)
             when = booking_time - datetime.timedelta(minutes=offset)
             await self.scheduler_service.add_job(send_notification, job_id = job_id, when=when, args=(chat_id, text))
 
     async def remove_reminder(self, booking_id:int, chat_id:int):
-        for offset in self.reminder_offsets_minutes:
+        for offset in settings.reminder_minutes_before:
             job_id = self.template_job_id.format(to=chat_id, id = booking_id, offset = offset)
             await self.scheduler_service.remove_job(job_id)
 

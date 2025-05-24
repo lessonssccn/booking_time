@@ -23,9 +23,10 @@ MY_BOOKING = "📋 Мои бронирования"
 BACK = "🔙 Назад"
 SETTINGS = "⚙️ Настройки"
 REMIND_SETTINGS = "🔔 Напоминания"
-REMIND_INACTIVE_ON = "🟢 Нет записи"
-REMIND_INACTIVE_OFF = "🔴 Нет записи"
-
+REMIND_INACTIVE = "Нет записи"
+REMIND_BEFOR = "За {offset} минут до записи"
+ICON_ON = "🟢"
+ICON_OFF = "🔴"
 
 #admin
 SLOT_ACTIONS = "🕒 Слоты"

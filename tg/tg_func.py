@@ -25,6 +25,7 @@ USER_ACTIONS = {
     State.USER_SHOW_START_MENU: "show_start_menu",
     State.USER_SHOW_REMINDE_SETTINGS: "show_reminde_settings",
     State.USER_TOGGLE_REMINDE_INACTIVE: "toggle_reminde_inactive",
+    State.USER_TOGGLE_REMINDE_BEFORE: "toggle_reminde_before",
 }
 
 async def process_start_msg(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -140,4 +141,8 @@ async def show_reminde_settings(update: Update, context: ContextTypes.DEFAULT_TY
 
 async def toggle_reminde_inactive(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     user = await ServiceFactory.get_user_service().update_user_reminde_inactive(update.effective_user.id, params.data)
+    await update.callback_query.edit_message_text(SHOW_REMINDE_SETTINGS_MSG, reply_markup=create_reminde_settings_kb(user))
+
+async def toggle_reminde_before(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    user = await ServiceFactory.get_user_service().update_user_reminde_before(update.effective_user.id, params.data)
     await update.callback_query.edit_message_text(SHOW_REMINDE_SETTINGS_MSG, reply_markup=create_reminde_settings_kb(user))

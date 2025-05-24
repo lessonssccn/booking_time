@@ -2,7 +2,7 @@ from database.base import Base
 import datetime
 from sqlalchemy import BigInteger, String, DECIMAL, Integer, Date, ForeignKey, Computed
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-
+from typing import List
 
 class User(Base):
     __tablename__ = "users"
@@ -14,6 +14,7 @@ class User(Base):
     lock_at:Mapped[datetime.datetime | None]
     reserve:Mapped[float] = mapped_column(DECIMAL(10,1), default=0)
     remind_inactive:Mapped[bool] = mapped_column(default=False, server_default="1")
+    reminder_minutes_before:Mapped[str] = mapped_column(default="[60,15,5]", server_default="[60,15,5]")
 
     bookings: Mapped[list["Booking"]] = relationship("Booking", back_populates="user")
 

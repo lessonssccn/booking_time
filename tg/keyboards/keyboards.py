@@ -29,11 +29,16 @@ def create_settings_kb():
     return InlineKeyboardMarkup(kb)
 
 def create_reminde_settings_kb(user:UserDTO):
-    text = REMIND_INACTIVE_ON if user.remind_inactive else REMIND_INACTIVE_OFF
-    kb = [
-            [InlineKeyboardButton(text, callback_data=str(Params(state=State.USER_TOGGLE_REMINDE_INACTIVE, data=(not user.remind_inactive))))],
-            [InlineKeyboardButton(BACK, callback_data=str(Params(state=State.USER_SHOW_SETTINGS)))]
-        ]
+    kb = []
+    for item in sorted(settings.reminder_minutes_before):
+        text = f"{ICON_ON if item in user.reminder_minutes_before else ICON_OFF} {REMIND_BEFOR.format(offset = item)}"
+        kb.append([InlineKeyboardButton(text, callback_data=str(Params(state=State.USER_TOGGLE_REMINDE_BEFORE, data=item)))])
+
+
+    inaction_text = f"{ICON_ON if user.remind_inactive else ICON_OFF} {REMIND_INACTIVE}"
+    kb.append([InlineKeyboardButton(inaction_text, callback_data=str(Params(state=State.USER_TOGGLE_REMINDE_INACTIVE, data=(not user.remind_inactive))))])
+    kb.append([InlineKeyboardButton(BACK, callback_data=str(Params(state=State.USER_SHOW_SETTINGS)))])
+    
     return InlineKeyboardMarkup(kb)
 
 def create_settings_btn():

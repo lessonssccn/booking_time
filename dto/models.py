@@ -1,7 +1,8 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, model_serializer
 from pydantic.config import ConfigDict
 from datetime import datetime, date, time
 from typing import List
+import json
 
 class UserDTO(BaseModel):
     id:int
@@ -12,8 +13,19 @@ class UserDTO(BaseModel):
     lock_at: datetime | None
     reserve: float
     remind_inactive:bool
+    reminder_minutes_before:List[int]
     created_at:datetime
     updated_at:datetime
+
+    @field_validator("reminder_minutes_before", mode="before")
+    def parse_reminder_minutes_before(cls, value: str) -> List[int]:
+        return json.loads(value)
+    
+    @model_serializer(mode="wrap")
+    def serialize_model(self, handler):
+        data = handler(self)
+        data["reminder_minutes_before"] = json.dumps(data["reminder_minutes_before"])
+        return data
 
     model_config = ConfigDict(from_attributes=True)
 
