@@ -4,14 +4,11 @@ USER_BOOKING_LIST = "Ваши бронирования актуально на {
 SELECTE_DATE = "Выберите 🗓️ дату:"
 SELECTE_TIME = "Вы выбрали 🗓️ {date}\nВыберите 🕒 время:"
 CONFIRM_BOOKING_SLOT = "Подтвердить запись:\n🗓️ {date}\n🕒 {time}"
-TEMPLATE_NOTIFICATION_CHANNAL = "{msg}\nПользователь {first_name} (@{username})"
 SUCCESS_BOOKING = "✅ Вы успешно запбронировали время:\n🗓️ {date}\n🕒 {time}"
-SUCCESS_BOOKING_CHANNAL_MSG = "✅ Забронировал время\n🗓️ {date}\n🕒 {time}"
-CONFIRM_BOOKING_ADMIN_MSG = "{first_name} (@{username})\nЗабронировал\n🗓️ {date}\n🕒 {time}"
 DETAILS_BOOKING = "Ваше бронирование\nКогда: {date}\nСтатус: {icon}\nВремя бронирования:{created_at}"
 CONFIRM_UNBOOKING = "Подтвердить удалние брони:\n🗓️ {date}\n🕒 {time}"
 SUCCESS_UNBOOKING = "✅ Вы отменили бронирование\n🗓️ {date}\n🕒 {time}"
-SUCCESS_UNBOOKING_CHANNAL_MSG = "❌ Отменил бронь\n🗓️ {date}\n🕒 {date}"
+
 BOT_START_NOTIFICATION = (
             "🤖 <b>Бот запущен {date}!</b>\n"
             "🆔 ID: <code>{bot_id}</code>\n"
@@ -82,3 +79,8 @@ SELECT_OTHER_DAY_BOOKING = "Выбирите дату 🗓️ на котору�
 SHOW_SETTINGS_MSG = "Здесь вы можете изменить настройки своего профиля"
 
 SHOW_REMINDE_SETTINGS_MSG = "🟢 - напоминание включенно\n🔴 - напоминание выключенно"
+
+
+
+
+POSTFIX_NOTIFICATION_CHANNAL = "{msg}\nПользователь {first_name} (@{username})"

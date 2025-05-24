@@ -32,7 +32,7 @@ class ServiceFactory:
     
     @staticmethod
     def get_booking_service() -> BookingService:
-        return BookingService(BookingRepository(), TimeslotRepository(), UserRepository(), DayRepository(), ServiceFactory.get_booking_reminder_service())
+        return BookingService(BookingRepository(), TimeslotRepository(), UserRepository(), DayRepository(), ServiceFactory.get_booking_reminder_service(),ServiceFactory.get_notification_service())
 
     @staticmethod
     def get_notification_service() -> NotificationService:

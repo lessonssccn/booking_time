@@ -4,6 +4,7 @@ from repositories.user_repository import UserRepository
 from repositories.timeslot_repository import TimeslotRepository
 from repositories.day_repository import DayRepository
 from services.booking_reminder_service import BookingReminderService
+from services.notifications_service import NotificationService
 from dto.booking_models import BookingPage
 from dto.models import BookingDTO, UserDTO
 from utils.booking_status import get_locked_status, get_actual_status, get_list_status_by_type, get_canceled_status, can_update_status, get_admin_confirm_status, get_admin_reject_status
@@ -12,14 +13,17 @@ from services.utils import get_limit_and_offset, get_actual_date_range
 import math
 from typing import List
 from settings.settings import settings
+from services.utils import get_success_booking_msg, get_success_unbooking_msg
+from tg.keyboards.keyboards import confirm_admin_booking_keyboard
 
 class BookingService:
-    def __init__(self, booking_repo:BookingRepository, timeslot_repo:TimeslotRepository, user_repo:UserRepository, day_repo:DayRepository, reminder: BookingReminderService):
+    def __init__(self, booking_repo:BookingRepository, timeslot_repo:TimeslotRepository, user_repo:UserRepository, day_repo:DayRepository, reminder: BookingReminderService, notification: NotificationService):
         self.booking_repo = booking_repo
         self.timeslot_repo = timeslot_repo
         self.user_repo = user_repo
         self.day_repo = day_repo
         self.reminder = reminder
+        self.notification = notification
         self.page_size = 10
         self.days = 30
 
@@ -73,6 +77,10 @@ class BookingService:
         
         booking = await self.booking_repo.add_new_booking(timslot_id, user.id)
 
+        notification_msg = get_success_booking_msg(booking)
+        await self.notification.send_notification_to_channel(notification_msg)
+        await self.notification.send_message_to_admin(notification_msg, confirm_admin_booking_keyboard(booking.id))
+
         return booking
     
     async def cancel_booking(self, booking_id:int, tg_id:int|None=None, is_admin:bool=False)->BookingDTO:
@@ -84,6 +92,9 @@ class BookingService:
 
         if result:
             await self.reminder.remove_booking(await self.get_booking_by_id(booking_id))
+
+        await self.notification.send_notification_to_channel(get_success_unbooking_msg(result))
+        
         return result
 
     async def cancel_bookings_day(self, date:datetime.date) -> List[BookingDTO]: 

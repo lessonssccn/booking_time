@@ -6,7 +6,6 @@ from tg.keyboards.keyboards import *
 from utils.utils import *
 from tg.constants import *
 from errors.errors import BaseError, UNKNOWN_ERROR_MSG, UNKNOWN_ERROR_NOTIFICATION
-from tg.tg_notifications import send_notification_to_channel, send_msg_to_admin
 from tg.callback_params import extract_callback_data, Params
 from utils.booking_status import get_status_booking_icon
 from tg.states.states import State
@@ -59,11 +58,11 @@ async def process_press_btn(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 
 async def process_booking_error(update: Update, context: ContextTypes.DEFAULT_TYPE, callback_data:str, e:BaseError):
     await update.callback_query.edit_message_text(f"({datetime.datetime.now()}) {e.get_user_msg()}", reply_markup=create_start_keyboard(update.effective_user.id))
-    await send_notification_to_channel(update, context, e.get_notification_msg()+f"\ntg_id={update.effective_user.id}\ncallback_data={callback_data}")
+    await ServiceFactory.get_notification_service().send_notification_to_channel(e.get_notification_msg()+f"\ntg_id={update.effective_user.id}\ncallback_data={callback_data}", tg_user=update.effective_user)
 
 async def process_unknown_error(update: Update, context: ContextTypes.DEFAULT_TYPE, callback_data:str, e:Exception):
     await update.callback_query.edit_message_text(f"({datetime.datetime.now()}) {UNKNOWN_ERROR_MSG}")
-    await send_notification_to_channel(update, context, UNKNOWN_ERROR_NOTIFICATION + f"\ntg_id={update.effective_user.id}\ncallback_data={callback_data}\nerror={e}")
+    await ServiceFactory.get_notification_service().send_notification_to_channel(UNKNOWN_ERROR_NOTIFICATION + f"\ntg_id={update.effective_user.id}\ncallback_data={callback_data}\nerror={e}", tg_user=update.effective_user)
     
 async def show_calendar(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     actual_slots = await ServiceFactory.get_timeslot_service().get_actual_timeslots()
@@ -92,12 +91,7 @@ async def booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Par
     await update.callback_query.edit_message_text(
         SUCCESS_BOOKING.format(date = date, time = time),
         reply_markup=create_unbooking_keyboard(booking.id))
-    
-    await send_notification_to_channel(update, context, SUCCESS_BOOKING_CHANNAL_MSG.format(date=date, time=time))
-    await send_msg_to_admin(update, context, 
-                            CONFIRM_BOOKING_ADMIN_MSG.format(first_name = tg_user.first_name, username = tg_user.username, date = date, time = time),
-                            confirm_admin_booking_keyboard(booking.id))       
-
+        
 async def show_list_my_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     tg_id = update.callback_query.from_user.id
     bookings = await ServiceFactory.get_booking_service().get_list_actual_booking(tg_id, params.booking_type, params.page)
@@ -128,7 +122,6 @@ async def unbooking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:P
     time = deleted_booking.date.time()
     await update.callback_query.edit_message_text(SUCCESS_UNBOOKING.format(date=date, time=time),
                                                    reply_markup=create_start_keyboard(tg_id))
-    await send_notification_to_channel(update, context, SUCCESS_UNBOOKING_CHANNAL_MSG.format(date=date, time=time))
 
 async def show_settings(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     await update.callback_query.edit_message_text(SHOW_SETTINGS_MSG, reply_markup=create_settings_kb())

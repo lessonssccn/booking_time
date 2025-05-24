@@ -3,6 +3,7 @@ from telegram.constants import ParseMode
 from dto.models import UserDTO
 from typing import List
 from settings.settings import settings
+from services.const_text import POSTFIX_NOTIFICATION_CHANNAL
 
 class NotificationService:
     def __init__(self, app:Application):
@@ -23,5 +24,10 @@ class NotificationService:
         for user in list_user:
             await self.send_message(user.tg_id, text, reply_markup=reply_markup, parse_mode=parse_mode)
 
-    async def send_notification_to_channel(self, msg):
+    async def send_notification_to_channel(self, msg, tg_user = None) -> None:
+        if tg_user:
+            msg = POSTFIX_NOTIFICATION_CHANNAL.format(msg=msg, first_name = tg_user.first_name, username = tg_user.username)
         await self.send_message(settings.telegram_channel_id, msg)
+
+    async def send_message_to_admin(self, msg, reply_markup=None) -> None:
+        await self.send_message(settings.admin_id, msg, reply_markup)

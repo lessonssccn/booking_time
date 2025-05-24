@@ -1,6 +1,7 @@
 from typing import Tuple
 import datetime
 from dto.models import UserDTO
+from dto.models import BookingDTO
 from services.const_text import *
 from utils.utils import *
 
@@ -18,3 +19,11 @@ def get_limit_and_offset(items_per_page:int, page:int) -> Tuple[int, int]:
 def get_user_info_as_txt(user:UserDTO)->str:
     date = datetime_to_str(user.created_at)
     return USER_INFO.format(name = user.first_name, username = user.username, tg_id = user.tg_id, user_id = user.id, date = date)
+
+def get_success_booking_msg(booking: BookingDTO):
+    date = datetime_to_str(booking.date)
+    return SUCCESS_BOOKING_MSG.format(date = date, name = booking.user.first_name, username = booking.user.username)
+
+def get_success_unbooking_msg(booking: BookingDTO):
+    date = datetime_to_str(booking.date)
+    return SUCCESS_UNBOOKING_MSG.format(date = date, name = booking.user.first_name, username = booking.user.username)
