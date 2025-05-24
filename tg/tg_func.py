@@ -35,7 +35,8 @@ async def process_start_msg(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(FIRST_MSG, reply_markup=create_start_keyboard(update.effective_user.id))
     except BaseError as e:
         await update.message.reply_text(e.get_user_msg(), reply_markup=create_start_keyboard(update.effective_user.id))
-    except:
+    except Exception as e:
+        print(e)
         await update.message.reply_text(UNKNOWN_ERROR_MSG)
 
 async def process_press_btn(update: Update, context: ContextTypes.DEFAULT_TYPE, data:str):

@@ -22,3 +22,6 @@ class NotificationService:
     async def send_message_to_users(self, list_user:List[UserDTO], text: str, reply_markup=None, parse_mode = None) -> None:
         for user in list_user:
             await self.send_message(user.tg_id, text, reply_markup=reply_markup, parse_mode=parse_mode)
+
+    async def send_notification_to_channel(self, msg):
+        await self.send_message(settings.telegram_channel_id, msg)

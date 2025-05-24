@@ -20,7 +20,7 @@ from services.booking_reminder_service import BookingReminderService
 class ServiceFactory:
     @staticmethod
     def get_user_service() -> UserService:
-        return UserService(UserRepository())
+        return UserService(UserRepository(), ServiceFactory.get_notification_service())
 
     @staticmethod    
     def get_timeslot_service() -> TimeslotService:

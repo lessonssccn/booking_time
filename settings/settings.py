@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     day_after_last_active:int
     day_before_future_booking:int
     reminder_minutes_before:List[int]
+    notification_create_new_user:bool
     
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 

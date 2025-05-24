@@ -1,0 +1,1 @@
+USER_INFO = "👤 {name} @{username}\n🆔 tg_id = {tg_id}\n🆔 user_id = {user_id}\ncreate_at = {date}"
