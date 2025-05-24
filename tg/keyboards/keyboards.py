@@ -21,10 +21,14 @@ def create_back_btn(state:State):
 def create_book_btn():
     return create_btn_show_calendar(SIGN_UP, State.USER_SHOW_CALENDAR)
 
+def create_start_menu_btn():
+    return InlineKeyboardButton(START_MENU, callback_data=str(Params(state=State.USER_SHOW_START_MENU)))
+
+
 def create_settings_kb():
     kb = [
             [InlineKeyboardButton(REMIND_SETTINGS, callback_data=str(Params(state=State.USER_SHOW_REMINDE_SETTINGS)))],
-            [InlineKeyboardButton(BACK, callback_data=str(Params(state=State.USER_SHOW_START_MENU)))]
+            [create_start_menu_btn()]
         ]
     return InlineKeyboardMarkup(kb)
 
@@ -131,7 +135,9 @@ def create_booking_list_buttons(bookings:BookingPage, booking_type:str=ACTUAL_BO
     btn_switch_type = create_list_booking_btn(nav_state, SHOW_ALL, ALL_BOOKING, 0, date) if booking_type == ACTUAL_BOOKING else create_list_booking_btn(nav_state, SHOW_ACTUAL, ACTUAL_BOOKING, 0, date)
     btn_refresh = create_list_booking_btn(nav_state, REFRESH_BTN, booking_type, 0, date)
     list_btn.append([btn_refresh, btn_switch_type])
+    list_btn.append([create_start_menu_btn()])
     list_btn.append([create_back_btn()])
+
 
     return InlineKeyboardMarkup(list_btn)
 
@@ -139,7 +145,7 @@ def create_booking_list_buttons(bookings:BookingPage, booking_type:str=ACTUAL_BO
 def create_calendar_buttons(actual_slots:ActualTimeslots, year:int=None, month:int=None, next_state:State = State.USER_SHOW_TIMESLOTS, nav_state:State = State.USER_SHOW_CALENDAR, is_admin:bool=False):
     additional_btns = []
     if not is_admin:
-        additional_btns.append(create_my_bookings())
+        additional_btns.append(create_start_menu_btn())
 
     cal = Calendar(actual_slots.min_date, 
                    actual_slots.max_date, 

@@ -27,6 +27,7 @@ REMIND_INACTIVE = "Нет записи"
 REMIND_BEFOR = "За {offset} минут до записи"
 ICON_ON = "🟢"
 ICON_OFF = "🔴"
+START_MENU = "☰ Меню"
 
 #admin
 SLOT_ACTIONS = "🕒 Слоты"

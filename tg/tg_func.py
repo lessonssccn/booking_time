@@ -73,7 +73,7 @@ async def show_time_slots(update: Update, context: ContextTypes.DEFAULT_TYPE, pa
     list_timeslot = await ServiceFactory.get_timeslot_service().get_list_timeslot_for_tg_user(params.date, tg_id)
     await update.callback_query.edit_message_text(
         SELECTE_TIME.format(date=params.date),
-        reply_markup=create_timeslots_buttons(list_timeslot, State.USER_SHOW_CONFIRM_BOOKING, is_admin=False,addition_btns=[[create_btn_show_calendar(OTHER_DATE, State.USER_SHOW_CALENDAR)]])
+        reply_markup=create_timeslots_buttons(list_timeslot, State.USER_SHOW_CONFIRM_BOOKING, is_admin=False,addition_btns=[[create_btn_show_calendar(OTHER_DATE, State.USER_SHOW_CALENDAR)], [create_start_menu_btn()]])
     )
 
 async def show_confirm_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
