@@ -136,7 +136,7 @@ def create_booking_list_buttons(bookings:BookingPage, booking_type:str=ACTUAL_BO
     btn_refresh = create_list_booking_btn(nav_state, REFRESH_BTN, booking_type, 0, date)
     list_btn.append([btn_refresh, btn_switch_type])
     list_btn.append([create_start_menu_btn()])
-    list_btn.append([create_back_btn()])
+    # list_btn.append([create_back_btn()])
 
 
     return InlineKeyboardMarkup(list_btn)
@@ -144,8 +144,7 @@ def create_booking_list_buttons(bookings:BookingPage, booking_type:str=ACTUAL_BO
 
 def create_calendar_buttons(actual_slots:ActualTimeslots, year:int=None, month:int=None, next_state:State = State.USER_SHOW_TIMESLOTS, nav_state:State = State.USER_SHOW_CALENDAR, is_admin:bool=False):
     additional_btns = []
-    if not is_admin:
-        additional_btns.append(create_start_menu_btn())
+    additional_btns.append(create_start_menu_btn())
 
     cal = Calendar(actual_slots.min_date, 
                    actual_slots.max_date, 
@@ -183,7 +182,7 @@ def create_calendar_range_buttons(year:int, month:int, next_state:State, nav_sta
                    callback_data_next = lambda year_next, month_next : f"state={nav_state}&year={year_next}&month={month_next}" + nav_callback_set_date,
                    callback_data_prev = lambda year_prev, month_prev : f"state={nav_state}&year={year_prev}&month={month_prev}" + nav_callback_set_date,
                    date_attributes = make_list_date_attribute_date_range(date_start, date_end, set_date), 
-                   additional_btns = [])
+                   additional_btns = [create_start_menu_btn()])
     
     if year is None:
         year = new.year
@@ -233,14 +232,16 @@ def create_confirm_booking_kb(date:datetime.date, timeslot_id:int):
         [InlineKeyboardButton(CONFIRM, callback_data=str(Params(state=State.USER_BOOKING, slot_id=timeslot_id)))],
         [InlineKeyboardButton(OTHER_TIME, callback_data=str(Params(state = State.USER_SHOW_TIMESLOTS, date = date)))],
         [InlineKeyboardButton(SHOW_CALENDAR, callback_data= str(Params(state = State.USER_SHOW_CALENDAR, year=date.year, month=date.month)))],
+        [create_start_menu_btn()],
     ]
     return InlineKeyboardMarkup(buttons)   
 
 def create_confirm_unbooking_kb(booking_id):
     buttons = [
         [InlineKeyboardButton(CONFIRM, callback_data=str(Params(state=State.USER_UNBOOKING, booking_id=booking_id)))],
-        [create_book_btn()],
-        [create_my_bookings()],
+        # [create_book_btn()],
+        # [create_my_bookings()],
+        [create_start_menu_btn()],
     ]
     keyboard = InlineKeyboardMarkup(buttons)
     return keyboard
@@ -248,8 +249,9 @@ def create_confirm_unbooking_kb(booking_id):
 def create_unbooking_keyboard(booking_id):
     buttons = [
         [InlineKeyboardButton(CANCEL, callback_data=str(Params(state=State.USER_SHOW_CONFIRM_UNBOOKING, booking_id=booking_id)))],
-        [create_book_btn()],
-        [create_my_bookings()]
+        # [create_book_btn()],
+        # [create_my_bookings()],
+        [create_start_menu_btn()],
     ]
     keyboard = InlineKeyboardMarkup(buttons)
     return keyboard
