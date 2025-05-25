@@ -19,6 +19,8 @@ class ErrorCode(Enum):
     ERROR_ADD_DAY = 15
     ERROR_DAO = 16
     ERROR_ADMIN_MATCH_BOOKING = 17
+    ERROR_ADMIN_UPDATE_BOOKING = 18
+
 
 
 UNKNOWN_ERROR_MSG = f"💀 Что-то пошло не так\nВыполните команду /start повторно"
@@ -37,7 +39,8 @@ error_code_to_user_msg = {
     ErrorCode.TIMESLOT_EXIST: "❌ Слот с таким временем и дайто уже существует",
     ErrorCode.ERROR_CREATE_TIMESLOT: "❌ Не удалось создать тайм слот",
     ErrorCode.INCORRECT_PARAM:"❌ Переданны не верные параметры",
-    ErrorCode.ERROR_ADMIN_MATCH_BOOKING: "❌ невозможно подтвердить статус бронирования, бронь отменна клиентом"
+    ErrorCode.ERROR_ADMIN_MATCH_BOOKING: "❌ невозможно подтвердить статус бронирования, бронь отменена клиентом или ее не существует",
+    ErrorCode.ERROR_ADMIN_UPDATE_BOOKING: "❌ неудальс обновить статус брони",
 }
 
 class BaseError(Exception):

@@ -24,11 +24,11 @@ class ServiceFactory:
 
     @staticmethod    
     def get_timeslot_service() -> TimeslotService:
-        return TimeslotService(TimeslotRepository(), DayRepository(), BookingRepository(), UserRepository())
+        return TimeslotService(TimeslotRepository(), DayRepository(), BookingRepository(), UserRepository(), ServiceFactory.get_notification_service())
     
     @staticmethod
     def get_day_service() -> DayService:
-        return DayService(DayRepository())
+        return DayService(DayRepository(), ServiceFactory.get_notification_service())
     
     @staticmethod
     def get_booking_service() -> BookingService:

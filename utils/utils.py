@@ -21,7 +21,7 @@ def get_sunday(date:datetime.date):
     return (date + datetime.timedelta(days=days_until_sunday)).date()
 
 def date_to_str(date:datetime.date):
-    return datetime.datetime.strftime(date, "%a (%d %B %Y)")
+    return datetime.datetime.strftime(date, "%a %d (%d %B %Y)")
 
 def datetime_to_str(date:datetime.datetime):
     

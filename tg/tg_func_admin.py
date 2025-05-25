@@ -6,7 +6,6 @@ from tg.keyboards.keyboards import *
 from tg.constants import *
 from tg.keyboards.kb_text import *
 from errors.errors import *
-from tg.tg_notifications import send_notification_to_channel, send_msg_to_client
 from services.service_factory import ServiceFactory
 from tg.callback_params import Params   
 from tg.states.states import State
@@ -107,8 +106,8 @@ ADMIN_ACTIONS_MSG = {
 
     State.ADMIN_COPY_SCHEDULE_CANCEL: COPY_SCHEDULE_CANCEL,
 
-    State.ADMIN_CONFIRM_BOOKING: (SUCCESS_CONFIRM_BOOKING_FOR_CLIENT, SUCCESS_CONFIRM_BOOKING_FOR_ADMIN),
-    State.ADMIN_REJECT_BOOKING: (SUCCESS_REJECT_BOOKING_FOR_CLIENT, SUCCESS_REJECT_BOOKING_FOR_ADMIN),
+    State.ADMIN_CONFIRM_BOOKING: SUCCESS_CONFIRM_BOOKING_FOR_ADMIN,
+    State.ADMIN_REJECT_BOOKING: SUCCESS_REJECT_BOOKING_FOR_ADMIN,
 
     State.ADMIN_UNBOOKING_DAY_CANCEL: UNBOOKING_DAY_CANCEL,
     State.ADMIN_SELECT_OTHER_DAY_BOOKING: SELECT_OTHER_DAY_BOOKING,
@@ -128,8 +127,8 @@ async def process_admin_action(update: Update, context: ContextTypes.DEFAULT_TYP
 
 async def process_unknown_action(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     await update.callback_query.edit_message_text(UNKNOWN_ERROR_MSG)
-    await send_notification_to_channel(update, context, UNKNOWN_ERROR_NOTIFICATION + f"\ntg_id={update.effective_user.id}\nparams={params.model_dump(exclude_unset=True)}")
-
+    await ServiceFactory.get_notification_service().send_notification_to_channel(UNKNOWN_ERROR_NOTIFICATION + f"\ntg_id={update.effective_user.id}\nparams={params.model_dump(exclude_unset=True)}", update.effective_user)
+   
 async def select_day(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     msg = ADMIN_ACTIONS_MSG.get(params.state, ERROR_MSG)
     next_action = ADMIN_ACTIONS_NEXT_ACTION[params.state]
@@ -165,7 +164,6 @@ async def add_timeslot_select_time(update: Update, context: ContextTypes.DEFAULT
 async def add_timeslot_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     await ServiceFactory.get_timeslot_service().add_timeslot(params.date, params.time)
     msg = TIMESLOT_CREATED.format(date=params.date, time=params.time)
-    await send_notification_to_channel(update, context, msg)
     await show_admin_msg(update, context, msg)
 #========================================================================================================
 async def remove_timeslot_confirm_msg(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
@@ -178,25 +176,21 @@ async def remove_timeslot_confirm_msg(update: Update, context: ContextTypes.DEFA
 async def process_admin_remove_timeslot_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     slot = await ServiceFactory.get_timeslot_service().remove_timeslot(params.slot_id)
     msg = TIMESLOT_REMOVED.format(date = slot.date, time = slot.time)
-    await send_notification_to_channel(update, context, msg)
     await show_admin_msg(update, context, msg)
 #=========================================================================================================
 async def process_lock_timeslot(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     slot = await ServiceFactory.get_timeslot_service().lock_timeslot(params.slot_id)
     msg = (TIMESLOT_UNLOCKED, TIMESLOT_LOCKED)[slot.lock].format(date = slot.date, time = slot.time)
-    await send_notification_to_channel(update, context, msg)
     await show_admin_msg(update, context, msg)
 
 async def process_hide_timeslot(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     slot = await ServiceFactory.get_timeslot_service().hide_timeslot(params.slot_id)
     msg = (TIMESLOT_SHOW, TIMESLOT_HIDDEN)[slot.hide].format(date = slot.date, time = slot.time)
-    await send_notification_to_channel(update, context, msg)
     await show_admin_msg(update, context, msg)
 #==========================================================================================================
 async def process_lock_day(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     day = await ServiceFactory.get_day_service().lock_day(params.date)
     msg = (DAY_UNLOCKED, DAY_LOCKED)[day.lock].format(date = day.date)
-    await send_notification_to_channel(update, context, msg)
     await show_admin_msg(update, context, msg)
 #==========================================================================================================
 async def admin_confirm_reject_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
@@ -205,26 +199,14 @@ async def admin_confirm_reject_booking(update: Update, context: ContextTypes.DEF
     else:
         func = ServiceFactory.get_booking_service().reject_booking
 
-    if await func(params.booking_id):
-        booking = await ServiceFactory.get_booking_service().get_booking_by_id(params.booking_id)
-        msg_client, msg_admin = ADMIN_ACTIONS_MSG[params.state]
-        msg_client = msg_client.format(date = booking.time_slot.date, time = booking.time_slot.time)
-        msg = msg_admin.format(date = booking.time_slot.date, time = booking.time_slot.time, name = booking.user.first_name, username = booking.user.username, tg_id = booking.user.tg_id)
-        await send_msg_to_client(update, context, booking.user.tg_id, msg_client)
-    else:
-        msg = FAIL_MATCH_BOOKING.format(id = params.booking_id)
-
-    await send_notification_to_channel(update, context, msg)
+    booking = await func(params.booking_id)
+    msg = ADMIN_ACTIONS_MSG[params.state].format(date = booking.time_slot.date, time = booking.time_slot.time, name = booking.user.first_name, username = booking.user.username, tg_id = booking.user.tg_id)
+  
     await show_admin_msg(update, context, msg)
 
 async def admin_cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     booking = await ServiceFactory.get_booking_service().cancel_booking(booking_id=params.booking_id, is_admin=True)
-
-    msg_client = SUCCESS_CANCEL_BOOKING_ADMIN_FOR_CLIENT.format(date = booking.time_slot.date, time = booking.time_slot.time)
     msg_admin = SUCCESS_CANCEL_BOOKING_ADMIN_FOR_ADMIN.format(date = booking.time_slot.date, time = booking.time_slot.time, name = booking.user.first_name, username = booking.user.username, tg_id = booking.user.tg_id)
-
-    await send_msg_to_client(update, context, booking.user.tg_id, msg_client)
-    await send_notification_to_channel(update, context, msg_admin)
     await show_admin_msg(update, context, msg_admin)
 
 #=====================================================================================================================================
@@ -269,11 +251,7 @@ async def show_confirm_msg_unbooking_day(update: Update, context: ContextTypes.D
 async def process_unbooking_day(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     booking_list = await ServiceFactory.get_booking_service().cancel_bookings_day(params.date)
     for booking in booking_list:
-        msg_client = SUCCESS_CANCEL_BOOKING_ADMIN_FOR_CLIENT.format(date = booking.time_slot.date, time = booking.time_slot.time)
         msg_admin = SUCCESS_CANCEL_BOOKING_ADMIN_FOR_ADMIN.format(date = booking.time_slot.date, time = booking.time_slot.time, name = booking.user.first_name, username = booking.user.username, tg_id = booking.user.tg_id)
-
-        await send_msg_to_client(update, context, booking.user.tg_id, msg_client)
-        await send_notification_to_channel(update, context, msg_admin)
         await show_admin_msg(update, context, msg_admin)
 
 #==========================================================================================================================

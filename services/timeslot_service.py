@@ -13,14 +13,18 @@ from utils.utils import get_list_date
 from errors.errors import *
 from dto.timeslot_models import UpdateTimeslot
 from settings.settings import settings
+from services.notifications_service import NotificationService
+from services.utils import get_success_msg_for_slot, get_copy_slot_result
+from services.const_text import *
 
 class TimeslotService:
-    def __init__(self, timeslot_repo:TimeslotRepository, day_repo:DayRepository, booking_repo:BookingRepository, user_repo:UserRepository):
+    def __init__(self, timeslot_repo:TimeslotRepository, day_repo:DayRepository, booking_repo:BookingRepository, user_repo:UserRepository, notification:NotificationService):
         self.timeslot_repo = timeslot_repo
         self.day_repo = day_repo
         self.booking_repo = booking_repo
         self.user_repo = user_repo
         self.days = settings.open_windows
+        self.notification = notification
 
     async def get_timeslot_by_id(self, timeslot_id:int) -> TimeSlotDTO:
         return await self.timeslot_repo.get_timeslot_by_id(timeslot_id)
@@ -48,10 +52,19 @@ class TimeslotService:
     async def add_timeslot(self, date:datetime.date, time:datetime.time) -> TimeSlotDTO:
         if await self.timeslot_repo.exist_timeslot(date, time):
             raise BookingError(ErrorCode.TIMESLOT_EXIST, date=date, time=time)
-        return await self.timeslot_repo.add_timeslot(date, time)
+        
+        slot = await self.timeslot_repo.add_timeslot(date, time)
+
+        await self.notification.send_notification_to_channel(get_success_msg_for_slot(slot, SUCCESS_TIMESLOT_CREATED)) 
+
+        return slot
     
     async def remove_timeslot(self, slot_id:int) -> TimeSlotDTO:
-        return await self.timeslot_repo.remove_timeslot(slot_id)
+        slot =  await self.timeslot_repo.remove_timeslot(slot_id)
+
+        await self.notification.send_notification_to_channel(get_success_msg_for_slot(slot, SUCCESS_TIMESLOT_REMOVED)) 
+
+        return slot
     
     async def lock_timeslot(self, slot_id:int) -> TimeSlotDTO:
         slot = await self.timeslot_repo.get_timeslot_by_id(slot_id)
@@ -59,6 +72,9 @@ class TimeslotService:
         update_data = UpdateTimeslot(lock = slot.lock)
         if not await self.timeslot_repo.update_timeslot(slot_id, update_data):
             raise BookingError(ErrorCode.ERROR_UPDATE_TIMESLOT, timeslot_id = slot_id, **update_data.model_dump(exclude_unset=True))
+        
+        await self.notification.send_notification_to_channel(get_success_msg_for_slot(slot, SUCCESS_TIMESLOT_LOCKED if slot.lock else SUCCESS_TIMESLOT_UNLOCKED)) 
+        
         return slot
     
     async def hide_timeslot(self, slot_id:int) -> TimeSlotDTO:
@@ -67,6 +83,9 @@ class TimeslotService:
         update_data = UpdateTimeslot(hide = slot.hide)
         if not await self.timeslot_repo.update_timeslot(slot_id, update_data):
             raise BookingError(ErrorCode.ERROR_UPDATE_TIMESLOT, timeslot_id = slot_id, **update_data.model_dump(exclude_unset=True))
+        
+        await self.notification.send_notification_to_channel(get_success_msg_for_slot(slot, SUCCESS_TIMESLOT_HIDDEN if slot.hide else SUCCESS_TIMESLOT_SHOW)) 
+       
         return slot
     
     def copy_slots(self, list_slot:List[TimeSlotDTO], list_date:List[datetime.date]) -> List[Tuple[datetime.date, datetime.time]]:
@@ -84,5 +103,9 @@ class TimeslotService:
     async def copy_range(self, date_src_start:datetime.date, date_src_end:datetime.date, date_des_start:datetime.date, date_des_end:datetime.date) -> int:
         list_slot = await self.get_list_timeslot_date_range(date_src_start, date_src_end)
         list_new_slot = self.copy_slots(list_slot, get_list_date(date_des_start, date_des_end))
-        return await self.timeslot_repo.try_add_list_timeslot(list_new_slot)
+        count = await self.timeslot_repo.try_add_list_timeslot(list_new_slot)
+
+        await self.notification.send_notification_to_channel(get_copy_slot_result(date_src_start,date_src_end,date_des_start,date_des_end, count))
+
+        return count
 

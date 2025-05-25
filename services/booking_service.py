@@ -13,8 +13,9 @@ from services.utils import get_limit_and_offset, get_actual_date_range
 import math
 from typing import List
 from settings.settings import settings
-from services.utils import get_success_booking_msg, get_success_unbooking_msg
+from services.utils import get_success_msg_for_booking
 from tg.keyboards.keyboards import confirm_admin_booking_keyboard
+from services.const_text import *
 
 class BookingService:
     def __init__(self, booking_repo:BookingRepository, timeslot_repo:TimeslotRepository, user_repo:UserRepository, day_repo:DayRepository, reminder: BookingReminderService, notification: NotificationService):
@@ -77,7 +78,7 @@ class BookingService:
         
         booking = await self.booking_repo.add_new_booking(timslot_id, user.id)
 
-        notification_msg = get_success_booking_msg(booking)
+        notification_msg = get_success_msg_for_booking(booking, SUCCESS_BOOKING_MSG)
         await self.notification.send_notification_to_channel(notification_msg)
         await self.notification.send_message_to_admin(notification_msg, confirm_admin_booking_keyboard(booking.id))
 
@@ -92,9 +93,10 @@ class BookingService:
 
         if result:
             await self.reminder.remove_booking(await self.get_booking_by_id(booking_id))
-
-        await self.notification.send_notification_to_channel(get_success_unbooking_msg(result))
-        
+            await self.notification.send_notification_to_channel(get_success_msg_for_booking(result, SUCCESS_UNBOOKING_ADMIN_MSG if is_admin else SUCCESS_UNBOOKING_MSG ))
+            if is_admin:
+                await self.notification.send_message_to_one_user(result.user, get_success_msg_for_booking(result, SUCCESS_UNBOOKING_ADMIN_MSG_FOR_USER))
+            
         return result
 
     async def cancel_bookings_day(self, date:datetime.date) -> List[BookingDTO]: 
@@ -104,22 +106,35 @@ class BookingService:
             result.append(await self.cancel_booking(booking.id, None, True))
         return result
     
-    async def update_status_booking(self, booking_id:int, new_status:str) -> bool:
+    async def update_status_booking(self, booking_id:int, new_status:str) -> BookingDTO:
         booking = await self.booking_repo.get_booking_by_id(booking_id)
-        if not can_update_status(booking.status):
-            raise MatchBookingError(booking_id=booking_id)
-        result =  await self.booking_repo.update_staust_booking(booking_id, new_status)
+        if not (booking and can_update_status(booking.status)):
+            raise BookingError(error_code=ErrorCode.ERROR_ADMIN_MATCH_BOOKING, booking_id = booking_id, new_status = new_status)
 
-        if result and new_status == get_admin_confirm_status():
-            await self.reminder.add_booking(booking)
-           
-        return result
+        result = await self.booking_repo.update_staust_booking(booking_id, new_status)
+        if not result:
+            raise BookingError(error_code=ErrorCode.ERROR_ADMIN_UPDATE_BOOKING, booking_id = booking_id, new_status = new_status) 
+     
+        return await self.booking_repo.get_booking_by_id(booking_id)
     
-    async def confirm_booking(self, booking_id:int) -> bool:
-        return await self.update_status_booking(booking_id, get_admin_confirm_status())
+    async def confirm_booking(self, booking_id:int) -> BookingDTO:
+        booking = await self.update_status_booking(booking_id, get_admin_confirm_status())
+        
+        await self.reminder.add_booking(booking)
+
+        await self.notification.send_notification_to_channel(get_success_msg_for_booking(booking, SUCCESS_CONFIRM_BOOKING_MSG))
+        await self.notification.send_message_to_one_user(booking.user, get_success_msg_for_booking(booking, SUCCESS_CONFIRM_BOOKING_MSG_FOR_USER))
+
+        return booking
+
     
     async def reject_booking(self, booking_id:int) -> bool:
-        return await self.update_status_booking(booking_id, get_admin_reject_status())
+        booking = await self.update_status_booking(booking_id, get_admin_reject_status())
+
+        await self.notification.send_notification_to_channel(get_success_msg_for_booking(booking, SUCCESS_REJECT_BOOKING_MSG))
+        await self.notification.send_message_to_one_user(booking.user, get_success_msg_for_booking(booking, SUCCESS_REJECT_BOOKING_MSG_FOR_USER))
+
+        return booking
 
     async def get_inactive_users_missing_future_bookings(self)->List[UserDTO]:
         now = datetime.datetime.now()
