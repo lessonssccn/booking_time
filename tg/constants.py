@@ -3,11 +3,11 @@ FIRST_MSG = "Бот для записи на занятия\nЕсли что-т�
 USER_BOOKING_LIST = "Ваши бронирования актуально на {date}\n🟢 - подтвержденная бронь\n🟡 - заявка не подтвержденна\n🔴 - завяка отклонена\n⚪ - отменнена пользователя\n⚫ - отмена админа"
 SELECTE_DATE = "Выберите 🗓️ дату:"
 SELECTE_TIME = "Вы выбрали 🗓️ {date}\nВыберите 🕒 время:"
-CONFIRM_BOOKING_SLOT = "Подтвердить запись:\n🗓️ {date}\n🕒 {time}"
-SUCCESS_BOOKING = "✅ Вы успешно запбронировали время:\n🗓️ {date}\n🕒 {time}"
+CONFIRM_BOOKING_SLOT = "Подтвердить запись:\n🗓️ {date}"
+SUCCESS_BOOKING = "✅ Вы успешно запбронировали время:\n🗓️ {date}"
 DETAILS_BOOKING = "Ваше бронирование\nКогда: {date}\nСтатус: {icon}\nВремя бронирования:{created_at}"
-CONFIRM_UNBOOKING = "Подтвердить удалние брони:\n🗓️ {date}\n🕒 {time}"
-SUCCESS_UNBOOKING = "✅ Вы отменили бронирование\n🗓️ {date}\n🕒 {time}"
+CONFIRM_UNBOOKING = "Подтвердить удалние брони:\n🗓️ {date}"
+SUCCESS_UNBOOKING = "✅ Вы отменили бронирование\n🗓️ {date}"
 
 BOT_START_NOTIFICATION = (
             "🤖 <b>Бот запущен {date}!</b>\n"
@@ -44,7 +44,7 @@ SELECT_DAY_ON_SRC_WEEK = "Выберите день 🗓️, на неделе, 
 SELECT_DAY_ON_DES_WEEK = "Выберите день🗓️, на неделе, куда надо скопировать слоты\n🟥 - выбранный день\n\n🟨 - текущая неделя\n\n🟧 - прошлая неделя\n\n🟪 - будущая неделя"
 CONFIRM_MSG_COPY_SCHEDULE = "Копировать расписание\n🗓️ {date_src_start} - {date_src_end}\n🗓️ {date_des_start} - {date_des_end}"
 COPY_SCHEDULE_CANCEL = "✋ Копирование расписания отменено"
-COPY_SCHEDULE_RESULT = "Копировать расписание\n🗓️ {date_src_start} - {date_src_end}\n🗓️ {date_des_start} - {date_des_end}\nБыло скопированно {count} слотов"
+COPY_SCHEDULE_RESULT = "Копирование завершенно\n🗓️ {date_src_start} - {date_src_end}\n🗓️ {date_des_start} - {date_des_end}\nБыло скопированно {count} слотов"
 
 CHOOSE_DATE_ADD_SLOT = "На какую дату 🗓️ создать слот:"
 CHOOSE_DATE_REMOVE_SLOT = "C какой даты 🗓️ удалить слот слот:"
@@ -56,14 +56,14 @@ CHOOSE_SLOT_REMOVE = "Вы выбрали 🗓️ {date}\nВыберите 🕒 
 CHOOSE_SLOT_LOCK = "Вы выбрали 🗓️ {date}\nВыберите 🕒 слот, который надо за(раз)блокировать:"
 CHOOSE_SLOT_HIDDEN = "Вы выбрали 🗓️ {date}\nВыберите 🕒 слот, который надо скрыть/показать:"
 
-SUCCESS_CONFIRM_BOOKING_FOR_CLIENT = "🟢 Бронирование одобренно\n🗓️ {date}\n🕒 {time}"
-SUCCESS_REJECT_BOOKING_FOR_CLIENT = "🔴 Бронирование отклоненно\n🗓️ {date}\n🕒 {time}"
-SUCCESS_CONFIRM_BOOKING_FOR_ADMIN = "🟢 Бронирование одобренно\n🗓️ {date}\n🕒 {time}\n👤 {name} @{username}\n🆔 tg_id = {tg_id}"
-SUCCESS_REJECT_BOOKING_FOR_ADMIN = "🔴 Бронирование отклоненно\n🗓️ {date}\n🕒 {time}\n👤 {name} @{username}\n🆔 tg_id = {tg_id}"
+SUCCESS_CONFIRM_BOOKING_FOR_CLIENT = "🟢 Бронирование одобренно\n🗓️ {date}"
+SUCCESS_REJECT_BOOKING_FOR_CLIENT = "🔴 Бронирование отклоненно\n🗓️ {date}"
+SUCCESS_CONFIRM_BOOKING_FOR_ADMIN = "🟢 Бронирование одобренно\n🗓️ {date}\n👤 {name} @{username}\n🆔 tg_id = {tg_id}"
+SUCCESS_REJECT_BOOKING_FOR_ADMIN = "🔴 Бронирование отклоненно\n🗓️ {date}\n👤 {name} @{username}\n🆔 tg_id = {tg_id}"
 
 FAIL_MATCH_BOOKING = "❌ Не удалось подтвердить бронь с id={id}"
-SUCCESS_CANCEL_BOOKING_ADMIN_FOR_CLIENT = "⚫ Бронирование отменно администратором\n🗓️ {date}\n🕒 {time}"
-SUCCESS_CANCEL_BOOKING_ADMIN_FOR_ADMIN = "⚫ Бронирование отменно администратором\n🗓️ {date}\n🕒 {time}\n👤 {name} @{username}\n🆔 tg_id = {tg_id}" 
+SUCCESS_CANCEL_BOOKING_ADMIN_FOR_CLIENT = "⚫ Бронирование отменно администратором\n🗓️ {date}"
+SUCCESS_CANCEL_BOOKING_ADMIN_FOR_ADMIN = "⚫ Бронирование отменно администратором\n🗓️ {date}\n👤 {name} @{username}\n🆔 tg_id = {tg_id}" 
 
 DAY_LOCKE_SELECT = "Какой день 🗓️ заблокировать/разблокировать"
 DAY_UNBOOKING = "На какой день отменить все бронирования 🗓️ ?"
@@ -72,7 +72,7 @@ ERROR_MSG = "❌ ERROR"
 
 ADMIN_BOOKING_LIST= "Бронирования на {date}\nактульно на {actual_date}\n🟢 - подтвержденная бронь\n🟡 - заявка не подтвержденна\n🔴 - завяка отклонена\n⚪ - отменнена пользователя\n⚫ - отмена админа"
 
-BOOKING_DETAILS_ADMIN = "🗓️ Дата {date}\n🕒 Время {time}\n👤 {name} @{username}\n🆔 tg_id = {tg_id}"
+BOOKING_DETAILS_ADMIN = "🗓️ Дата {date}\n👤 {name} @{username}\n🆔 tg_id = {tg_id}"
 
 SELECT_OTHER_DAY_BOOKING = "Выбирите дату 🗓️ на которую надо показать бронирования"
 

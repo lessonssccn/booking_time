@@ -3,7 +3,8 @@ from dto.models import UserDTO
 from dto.tg_models import CreateUserTG, UpdateUser
 from services.notifications_service import NotificationService
 from settings.settings import settings
-from services.utils import get_user_info_as_txt
+from utils.utils import get_user_info_as_txt
+from services.const_text import USER_INFO
 
 class UserService:
     def __init__(self, user_repo:UserRepository, notification_service :NotificationService):
@@ -15,7 +16,7 @@ class UserService:
         if not user:
             user = await self.user_repo.add_tg_user(CreateUserTG(tg_id=tg_id, username=username, first_name=first_name, last_name=last_name))
             if settings.notification_create_new_user:
-                await self.notification_service.send_notification_to_channel(get_user_info_as_txt(user))
+                await self.notification_service.send_notification_to_channel(get_user_info_as_txt(user, USER_INFO))
         return user
     
     async def get_user_by_tg_id(self, tg_id:int)->UserDTO:

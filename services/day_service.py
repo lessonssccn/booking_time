@@ -4,7 +4,7 @@ from typing import List
 import datetime
 from errors.errors import *
 from services.notifications_service import NotificationService
-from services.utils import get_success_msg_for_day
+from utils.utils import get_msg_for_day
 from services.const_text import SUCCESS_DAY_LOCKED, SUCCESS_DAY_UNLOCKED
 class DayService:
     def __init__(self, day_repo:DayRepository, notification:NotificationService):
@@ -23,7 +23,7 @@ class DayService:
             if not day:
                 raise BookingError(error_code=ErrorCode.ERROR_ADD_DAY, date = date)
             
-        await self.notification.send_notification_to_channel(get_success_msg_for_day(day, SUCCESS_DAY_LOCKED if day.lock else SUCCESS_DAY_UNLOCKED))
+        await self.notification.send_notification_to_channel(get_msg_for_day(day, SUCCESS_DAY_LOCKED if day.lock else SUCCESS_DAY_UNLOCKED))
         
         return day
     

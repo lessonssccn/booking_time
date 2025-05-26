@@ -72,24 +72,22 @@ async def show_time_slots(update: Update, context: ContextTypes.DEFAULT_TYPE, pa
     tg_id = update.callback_query.from_user.id
     list_timeslot = await ServiceFactory.get_timeslot_service().get_list_timeslot_for_tg_user(params.date, tg_id)
     await update.callback_query.edit_message_text(
-        SELECTE_TIME.format(date=params.date),
+        SELECTE_TIME.format(date= date_to_str(params.date)),
         reply_markup=create_timeslots_buttons(list_timeslot, State.USER_SHOW_CONFIRM_BOOKING, is_admin=False,addition_btns=[[create_btn_show_calendar(OTHER_DATE, State.USER_SHOW_CALENDAR)], [create_start_menu_btn()]])
     )
 
 async def show_confirm_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     slot = await ServiceFactory.get_timeslot_service().get_timeslot_by_id(params.slot_id)
     await update.callback_query.edit_message_text(
-        CONFIRM_BOOKING_SLOT.format(date=slot.date, time=slot.time),
+        get_msg_for_slot(slot, CONFIRM_BOOKING_SLOT),
         reply_markup=create_confirm_booking_kb(slot.date, slot.id)
     )
 
 async def booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     tg_user = update.callback_query.from_user
     booking = await ServiceFactory.get_booking_service().booking(params.slot_id, tg_user.id)
-    date = booking.date.date()
-    time = booking.date.time()
     await update.callback_query.edit_message_text(
-        SUCCESS_BOOKING.format(date = date, time = time),
+        get_msg_for_booking(booking, SUCCESS_BOOKING),
         reply_markup=create_unbooking_keyboard(booking.id))
         
 async def show_list_my_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
@@ -111,16 +109,14 @@ async def show_confirm_unbooking(update: Update, context: ContextTypes.DEFAULT_T
     tg_id = update.callback_query.from_user.id
     booking = await ServiceFactory.get_booking_service().get_booking(params.booking_id, tg_id)
     await update.callback_query.edit_message_text(
-        CONFIRM_UNBOOKING.format(date = booking.date.date(), time = booking.date.time()),
+        get_msg_for_booking(booking, CONFIRM_UNBOOKING),
         reply_markup=create_confirm_unbooking_kb(booking.id)
     )
 
 async def unbooking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     tg_id = update.callback_query.from_user.id
     deleted_booking = await ServiceFactory.get_booking_service().cancel_booking(params.booking_id, tg_id, False)
-    date = deleted_booking.date.date()
-    time = deleted_booking.date.time()
-    await update.callback_query.edit_message_text(SUCCESS_UNBOOKING.format(date=date, time=time),
+    await update.callback_query.edit_message_text(get_msg_for_booking(deleted_booking, SUCCESS_UNBOOKING),
                                                    reply_markup=create_start_keyboard(tg_id))
 
 async def show_settings(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):

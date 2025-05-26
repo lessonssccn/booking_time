@@ -9,7 +9,6 @@ from errors.errors import *
 from services.service_factory import ServiceFactory
 from tg.callback_params import Params   
 from tg.states.states import State
-from settings.settings import settings
 
 ADMIN_ACTIONS_FUNC = {
     State.ADMIN_ADD_TIMESLOT_SELECT_DATE:"select_day",
@@ -140,7 +139,7 @@ async def select_range_day(update: Update, context: ContextTypes.DEFAULT_TYPE, p
     await show_range_calendar_admin(update, context, msg, next_action, params)
 
 async def select_slot(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
-    msg = ADMIN_ACTIONS_MSG.get(params.state, ERROR_MSG).format(date=params.date)
+    msg = ADMIN_ACTIONS_MSG.get(params.state, ERROR_MSG).format(date = date_to_str(params.date))
     next_action = ADMIN_ACTIONS_NEXT_ACTION[params.state]
     prev_action = ADMIN_ACTIONS_PREV_ACTION[params.state]
     await show_list_timeslot_admin(update, context, params.date, msg, next_action, prev_action)
@@ -155,42 +154,42 @@ async def add_timeslot_select_time(update: Update, context: ContextTypes.DEFAULT
     default = State.ADMIN_ADD_TIMESLOT_SELECT_TIME
     confirm = State.ADMIN_ADD_TIMESLOT_CONFIRM
     cancel = State.ADMIN_ADD_TIMESLOT_CANCEL
-    msg = TIMESLOT_CREATE_SELECT_TIME.format(date = params.date)
+    msg = TIMESLOT_CREATE_SELECT_TIME.format(date = date_to_str(params.date))
     list_slot = await ServiceFactory.get_timeslot_service().get_list_timeslot_by_date(params.date)
     if list_slot:
         msg += TIMESLOT_ALREADY_CREATED.format(list_slot = "\n".join(map(lambda item: f"{item.time}", list_slot)))
     await show_time_picker(update, context, msg ,params.date, params.time, default, confirm, cancel)
 
 async def add_timeslot_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
-    await ServiceFactory.get_timeslot_service().add_timeslot(params.date, params.time)
-    msg = TIMESLOT_CREATED.format(date=params.date, time=params.time)
+    slot = await ServiceFactory.get_timeslot_service().add_timeslot(params.date, params.time)
+    msg =  get_msg_for_slot(slot, TIMESLOT_CREATED)
     await show_admin_msg(update, context, msg)
 #========================================================================================================
 async def remove_timeslot_confirm_msg(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     slot = await ServiceFactory.get_timeslot_service().get_timeslot_by_id(params.slot_id)
     callback_data_confirm = str(Params(state=State.ADMIN_REMOVE_TIMESLOT_CONFIRM, slot_id=slot.id))
     callback_data_cancel = str(Params(state=State.ADMIN_REMOVE_TIMESLOT_CANCEL, slot_id=slot.id))
-    msg = CONFIRM_REMOVE.format(date=slot.date, time=slot.time)
+    msg =  get_msg_for_slot(slot, CONFIRM_REMOVE) 
     await show_confirm_msg(update, context, msg, callback_data_confirm, callback_data_cancel)
 
 async def process_admin_remove_timeslot_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     slot = await ServiceFactory.get_timeslot_service().remove_timeslot(params.slot_id)
-    msg = TIMESLOT_REMOVED.format(date = slot.date, time = slot.time)
+    msg = get_msg_for_slot(slot, TIMESLOT_REMOVED)
     await show_admin_msg(update, context, msg)
 #=========================================================================================================
 async def process_lock_timeslot(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     slot = await ServiceFactory.get_timeslot_service().lock_timeslot(params.slot_id)
-    msg = (TIMESLOT_UNLOCKED, TIMESLOT_LOCKED)[slot.lock].format(date = slot.date, time = slot.time)
+    msg = get_msg_for_slot(slot, (TIMESLOT_UNLOCKED, TIMESLOT_LOCKED)[slot.lock])
     await show_admin_msg(update, context, msg)
 
 async def process_hide_timeslot(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     slot = await ServiceFactory.get_timeslot_service().hide_timeslot(params.slot_id)
-    msg = (TIMESLOT_SHOW, TIMESLOT_HIDDEN)[slot.hide].format(date = slot.date, time = slot.time)
+    msg = get_msg_for_slot(slot, (TIMESLOT_SHOW, TIMESLOT_HIDDEN)[slot.hide])
     await show_admin_msg(update, context, msg)
 #==========================================================================================================
 async def process_lock_day(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     day = await ServiceFactory.get_day_service().lock_day(params.date)
-    msg = (DAY_UNLOCKED, DAY_LOCKED)[day.lock].format(date = day.date)
+    msg = get_msg_for_day(day, (DAY_UNLOCKED, DAY_LOCKED)[day.lock])
     await show_admin_msg(update, context, msg)
 #==========================================================================================================
 async def admin_confirm_reject_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
@@ -198,16 +197,14 @@ async def admin_confirm_reject_booking(update: Update, context: ContextTypes.DEF
         func = ServiceFactory.get_booking_service().confirm_booking
     else:
         func = ServiceFactory.get_booking_service().reject_booking
-
     booking = await func(params.booking_id)
-    msg = ADMIN_ACTIONS_MSG[params.state].format(date = booking.time_slot.date, time = booking.time_slot.time, name = booking.user.first_name, username = booking.user.username, tg_id = booking.user.tg_id)
-  
+    msg =  get_msg_for_booking(booking, ADMIN_ACTIONS_MSG[params.state]) 
     await show_admin_msg(update, context, msg)
 
 async def admin_cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     booking = await ServiceFactory.get_booking_service().cancel_booking(booking_id=params.booking_id, is_admin=True)
-    msg_admin = SUCCESS_CANCEL_BOOKING_ADMIN_FOR_ADMIN.format(date = booking.time_slot.date, time = booking.time_slot.time, name = booking.user.first_name, username = booking.user.username, tg_id = booking.user.tg_id)
-    await show_admin_msg(update, context, msg_admin)
+    msg = get_msg_for_booking(booking, SUCCESS_CANCEL_BOOKING_ADMIN_FOR_ADMIN)
+    await show_admin_msg(update, context, msg)
 
 #=====================================================================================================================================
 async def show_list_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
@@ -239,7 +236,7 @@ async def show_list_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 
 async def show_booking_details(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     booking = await ServiceFactory.get_booking_service().get_booking_by_id(params.booking_id)
-    msg = BOOKING_DETAILS_ADMIN.format(date = booking.time_slot.date, time = booking.time_slot.time, name = booking.user.first_name, username = booking.user.username, tg_id = booking.user.tg_id)
+    msg = get_msg_for_booking(booking, BOOKING_DETAILS_ADMIN)
     await update.callback_query.edit_message_text(msg, reply_markup = confirm_admin_booking_keyboard(booking.id))
 #==========================================================================================================================
 async def show_confirm_msg_unbooking_day(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
@@ -259,16 +256,13 @@ async def show_confirm_copy_schedule(update: Update, context: ContextTypes.DEFAU
     callback_data_confirm = str(Params(state=State.ADMIN_COPY_SCHEDULE_CONFIRM, date=params.date, date2=params.date2))
     callback_data_cancel = str(Params(state=State.ADMIN_COPY_SCHEDULE_CANCEL, date=params.date))
     
-    date_src_start = date_to_str(get_monday(params.date))
-    date_src_end = date_to_str(get_sunday(params.date))
+    date_src_start = get_monday(params.date)
+    date_src_end = get_sunday(params.date)
 
-    date_des_start = date_to_str(get_monday(params.date2))
-    date_des_end = date_to_str(get_sunday(params.date2))
+    date_des_start = get_monday(params.date2)
+    date_des_end = get_sunday(params.date2)
     
-    msg = CONFIRM_MSG_COPY_SCHEDULE.format(date_src_start = date_src_start, 
-                                           date_src_end = date_src_end, 
-                                           date_des_start = date_des_start, 
-                                           date_des_end = date_des_end)
+    msg = get_msg_for_copy_slot(date_src_start, date_src_end, date_des_start, date_des_end, CONFIRM_MSG_COPY_SCHEDULE)
     
     await show_confirm_msg(update, context, msg, callback_data_confirm, callback_data_cancel)
 
@@ -281,11 +275,9 @@ async def process_copy_schedule(update: Update, context: ContextTypes.DEFAULT_TY
 
     count_new_slot = await ServiceFactory.get_timeslot_service().copy_range(date_src_start, date_src_end, date_des_start, date_des_end)
 
-    await show_admin_msg(update, context, COPY_SCHEDULE_RESULT.format(date_src_start = date_to_str(date_src_start), 
-                                           date_src_end = date_to_str(date_src_end), 
-                                           date_des_start = date_to_str(date_des_start), 
-                                           date_des_end = date_to_str(date_des_end),
-                                           count = count_new_slot))
+    msg = get_msg_for_copy_slot(date_src_start, date_src_end, date_des_start, date_des_end, COPY_SCHEDULE_RESULT, count_new_slot)
+
+    await show_admin_msg(update, context, msg)
 
 #==========================================================================================================================
 async def show_admin_msg(update: Update, context: ContextTypes.DEFAULT_TYPE, msg: str):

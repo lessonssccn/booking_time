@@ -14,7 +14,7 @@ from errors.errors import *
 from dto.timeslot_models import UpdateTimeslot
 from settings.settings import settings
 from services.notifications_service import NotificationService
-from services.utils import get_success_msg_for_slot, get_copy_slot_result
+from utils.utils import get_msg_for_copy_slot, get_msg_for_slot
 from services.const_text import *
 
 class TimeslotService:
@@ -55,14 +55,14 @@ class TimeslotService:
         
         slot = await self.timeslot_repo.add_timeslot(date, time)
 
-        await self.notification.send_notification_to_channel(get_success_msg_for_slot(slot, SUCCESS_TIMESLOT_CREATED)) 
+        await self.notification.send_notification_to_channel(get_msg_for_slot(slot, SUCCESS_TIMESLOT_CREATED)) 
 
         return slot
     
     async def remove_timeslot(self, slot_id:int) -> TimeSlotDTO:
         slot =  await self.timeslot_repo.remove_timeslot(slot_id)
 
-        await self.notification.send_notification_to_channel(get_success_msg_for_slot(slot, SUCCESS_TIMESLOT_REMOVED)) 
+        await self.notification.send_notification_to_channel(get_msg_for_slot(slot, SUCCESS_TIMESLOT_REMOVED)) 
 
         return slot
     
@@ -73,7 +73,7 @@ class TimeslotService:
         if not await self.timeslot_repo.update_timeslot(slot_id, update_data):
             raise BookingError(ErrorCode.ERROR_UPDATE_TIMESLOT, timeslot_id = slot_id, **update_data.model_dump(exclude_unset=True))
         
-        await self.notification.send_notification_to_channel(get_success_msg_for_slot(slot, SUCCESS_TIMESLOT_LOCKED if slot.lock else SUCCESS_TIMESLOT_UNLOCKED)) 
+        await self.notification.send_notification_to_channel(get_msg_for_slot(slot, SUCCESS_TIMESLOT_LOCKED if slot.lock else SUCCESS_TIMESLOT_UNLOCKED)) 
         
         return slot
     
@@ -84,7 +84,7 @@ class TimeslotService:
         if not await self.timeslot_repo.update_timeslot(slot_id, update_data):
             raise BookingError(ErrorCode.ERROR_UPDATE_TIMESLOT, timeslot_id = slot_id, **update_data.model_dump(exclude_unset=True))
         
-        await self.notification.send_notification_to_channel(get_success_msg_for_slot(slot, SUCCESS_TIMESLOT_HIDDEN if slot.hide else SUCCESS_TIMESLOT_SHOW)) 
+        await self.notification.send_notification_to_channel(get_msg_for_slot(slot, SUCCESS_TIMESLOT_HIDDEN if slot.hide else SUCCESS_TIMESLOT_SHOW)) 
        
         return slot
     
@@ -105,7 +105,7 @@ class TimeslotService:
         list_new_slot = self.copy_slots(list_slot, get_list_date(date_des_start, date_des_end))
         count = await self.timeslot_repo.try_add_list_timeslot(list_new_slot)
 
-        await self.notification.send_notification_to_channel(get_copy_slot_result(date_src_start,date_src_end,date_des_start,date_des_end, count))
+        await self.notification.send_notification_to_channel(get_msg_for_copy_slot(date_src_start,date_src_end,date_des_start,date_des_end, COPY_SCHEDULE_RESULT, count))
 
         return count
 

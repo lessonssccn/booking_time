@@ -13,7 +13,7 @@ from services.utils import get_limit_and_offset, get_actual_date_range
 import math
 from typing import List
 from settings.settings import settings
-from services.utils import get_success_msg_for_booking
+from utils.utils import get_msg_for_booking
 from tg.keyboards.keyboards import confirm_admin_booking_keyboard
 from services.const_text import *
 
@@ -78,7 +78,7 @@ class BookingService:
         
         booking = await self.booking_repo.add_new_booking(timslot_id, user.id)
 
-        notification_msg = get_success_msg_for_booking(booking, SUCCESS_BOOKING_MSG)
+        notification_msg = get_msg_for_booking(booking, SUCCESS_BOOKING_MSG)
         await self.notification.send_notification_to_channel(notification_msg)
         await self.notification.send_message_to_admin(notification_msg, confirm_admin_booking_keyboard(booking.id))
 
@@ -93,9 +93,9 @@ class BookingService:
 
         if result:
             await self.reminder.remove_booking(await self.get_booking_by_id(booking_id))
-            await self.notification.send_notification_to_channel(get_success_msg_for_booking(result, SUCCESS_UNBOOKING_ADMIN_MSG if is_admin else SUCCESS_UNBOOKING_MSG ))
+            await self.notification.send_notification_to_channel(get_msg_for_booking(result, SUCCESS_UNBOOKING_ADMIN_MSG if is_admin else SUCCESS_UNBOOKING_MSG ))
             if is_admin:
-                await self.notification.send_message_to_one_user(result.user, get_success_msg_for_booking(result, SUCCESS_UNBOOKING_ADMIN_MSG_FOR_USER))
+                await self.notification.send_message_to_one_user(result.user, get_msg_for_booking(result, SUCCESS_UNBOOKING_ADMIN_MSG_FOR_USER))
             
         return result
 
@@ -122,8 +122,8 @@ class BookingService:
         
         await self.reminder.add_booking(booking)
 
-        await self.notification.send_notification_to_channel(get_success_msg_for_booking(booking, SUCCESS_CONFIRM_BOOKING_MSG))
-        await self.notification.send_message_to_one_user(booking.user, get_success_msg_for_booking(booking, SUCCESS_CONFIRM_BOOKING_MSG_FOR_USER))
+        await self.notification.send_notification_to_channel(get_msg_for_booking(booking, SUCCESS_CONFIRM_BOOKING_MSG))
+        await self.notification.send_message_to_one_user(booking.user, get_msg_for_booking(booking, SUCCESS_CONFIRM_BOOKING_MSG_FOR_USER))
 
         return booking
 
@@ -131,8 +131,8 @@ class BookingService:
     async def reject_booking(self, booking_id:int) -> bool:
         booking = await self.update_status_booking(booking_id, get_admin_reject_status())
 
-        await self.notification.send_notification_to_channel(get_success_msg_for_booking(booking, SUCCESS_REJECT_BOOKING_MSG))
-        await self.notification.send_message_to_one_user(booking.user, get_success_msg_for_booking(booking, SUCCESS_REJECT_BOOKING_MSG_FOR_USER))
+        await self.notification.send_notification_to_channel(get_msg_for_booking(booking, SUCCESS_REJECT_BOOKING_MSG))
+        await self.notification.send_message_to_one_user(booking.user, get_msg_for_booking(booking, SUCCESS_REJECT_BOOKING_MSG_FOR_USER))
 
         return booking
 
