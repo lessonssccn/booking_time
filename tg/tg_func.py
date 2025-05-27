@@ -1,5 +1,6 @@
 from telegram import Update
 from telegram.ext import ContextTypes
+from telegram.constants import ParseMode
 from tg.tg_func_admin import process_admin_action
 from services.service_factory import ServiceFactory
 from tg.keyboards.keyboards import *
@@ -31,7 +32,7 @@ async def process_start_msg(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         user = update.effective_user
         user = await ServiceFactory.get_user_service().get_or_create_user(user.id, user.username, user.first_name, user.last_name)
-        await update.message.reply_text(FIRST_MSG, reply_markup=create_start_keyboard(update.effective_user.id))
+        await update.message.reply_text(FIRST_MSG.format(date=datetime_to_str(datetime.datetime.now())), reply_markup=create_start_keyboard(update.effective_user.id), parse_mode=ParseMode.HTML)
     except BaseError as e:
         await update.message.reply_text(e.get_user_msg(), reply_markup=create_start_keyboard(update.effective_user.id))
     except Exception as e:
@@ -123,7 +124,7 @@ async def show_settings(update: Update, context: ContextTypes.DEFAULT_TYPE, para
     await update.callback_query.edit_message_text(SHOW_SETTINGS_MSG, reply_markup=create_settings_kb())
 
 async def show_start_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
-    await update.callback_query.edit_message_text(FIRST_MSG, reply_markup=create_start_keyboard(update.effective_user.id))
+    await update.callback_query.edit_message_text(FIRST_MSG.format(date=datetime_to_str(datetime.datetime.now())), reply_markup=create_start_keyboard(update.effective_user.id), parse_mode=ParseMode.HTML)
 
 async def show_reminde_settings(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     user = await ServiceFactory.get_user_service().get_user_by_tg_id(update.effective_user.id)

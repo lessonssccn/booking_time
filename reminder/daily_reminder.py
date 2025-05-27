@@ -1,6 +1,5 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from settings.settings import settings
-from scheduler.scheduler_holder import SchedulerHolder
 from services.service_factory import ServiceFactory
 from apscheduler.triggers.cron import CronTrigger
 from notifications.constants import *
@@ -18,8 +17,7 @@ async def daily_reminder_func() -> None:
     print("daily_reminder_func finish")
     
 
-async def restart_reminder() -> None:
-    scheduler:AsyncIOScheduler = SchedulerHolder.get_scheduler()
+async def restart_reminder(scheduler:AsyncIOScheduler) -> None:
     time = settings.daily_reminder_time
     job = scheduler.get_job(DAILY_REMINDER_ID)
     print(job)
