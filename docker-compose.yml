@@ -1,0 +1,43 @@
+services:
+  app:
+    image: booking-bot
+    env_file:
+      - .env
+    volumes:
+      - ./booking.db:/app/booking.db
+      - ./jobs.sqlite:/app/jobs.sqlite
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+          cpus: '1'
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  #   depends_on:
+  #     - cadvisor
+  #   restart: unless-stopped
+
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: grafana
+  #   ports:
+  #     - "3000:3000"
+  #   restart: unless-stopped

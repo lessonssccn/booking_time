@@ -1,0 +1,15 @@
+booking.db
+jobs.sqlite
+/env/
+/__pycache__/
+**/__pycache__/
+*.pyc
+*.log
+*.md
+.git
+.gitignore
+Dockerfile
+*.sqlite3
+*.db-wal
+*.db-shm
+.env
