@@ -7,8 +7,7 @@ import asyncio
 locale.setlocale(locale.LC_TIME, settings.bot_locale)
 
 async def main():
-    token = settings.telegram_bot_token
-    await run_bots([token])
+    await run_bots(settings.telegram_bot_token)
 
 if __name__ == "__main__":
    asyncio.run(main())  

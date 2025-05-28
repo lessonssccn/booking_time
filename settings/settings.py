@@ -3,7 +3,7 @@ import datetime
 from typing import List
 
 class Settings(BaseSettings):
-    telegram_bot_token:str
+    telegram_bot_token:List[str]
     telegram_channel_id:int
     admin_id:int
     connection_string:str
