@@ -10,8 +10,6 @@ from tg.handlers import start, button_handler
 import asyncio
 import signal
 
-
-
 def signal_handler(list_stop_event:List[asyncio.Event]):
     print("\nПолучен сигнал остановки (Ctrl+C)")
     for stop_event in list_stop_event:
@@ -28,7 +26,6 @@ async def run_bots(token_list:List[str])->None:
         list_task.append(asyncio.create_task(run_bot(token, stop_event)))
         list_stop_event.append(stop_event)
         
-
     loop = asyncio.get_event_loop()
     loop.add_signal_handler(signal.SIGINT, lambda : signal_handler(list_stop_event))
     loop.add_signal_handler(signal.SIGTERM, lambda : signal_handler(list_stop_event))
@@ -57,13 +54,14 @@ async def run_bot(token:str, stop_event:asyncio.Event):
 
 async def on_startup(application: Application):
     try:
-        BotAppHolder.set_app(application)
+        BotAppHolder.add_app(application)
+        bot = application.bot
+
         await SchedulerHolder.init_scheduler()
-        await restart_reminder(await SchedulerHolder.get_scheduler_async())
+        await restart_reminder(bot.id, await SchedulerHolder.get_scheduler_async())
 
         channel_id = get_channel_id()
-            
-        bot = application.bot
+
         message = BOT_START_NOTIFICATION.format(date = datetime.datetime.now(), bot_id = bot.id, bot_username = bot.username)
         await bot.send_message(
             chat_id=channel_id,

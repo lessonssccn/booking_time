@@ -9,10 +9,11 @@ import datetime
 from settings.settings import settings
 
 class BookingReminderService:
-    def __init__(self, scheduler_service: SchedulerService, reminder_offsets_minutes:List[int]=[60,15,5]):
+    def __init__(self, bot_id:int, scheduler_service: SchedulerService, reminder_offsets_minutes:List[int]=[60,15,5]):
         self.scheduler_service = scheduler_service
         self.reminder_offsets_minutes = reminder_offsets_minutes
-        self.template_job_id = "rb_{to}_{id}_{offset}"
+        self.bot_id = bot_id
+        self.template_job_id = "rb_{bot_id}_{to}_{id}_{offset}"
 
     async def add_booking(self, booking:BookingDTO): 
         await self.add_reminder_for_user(booking)
@@ -43,15 +44,15 @@ class BookingReminderService:
             reminder_offsets_minutes = self.reminder_offsets_minutes
 
         for offset in reminder_offsets_minutes:
-            job_id = self.template_job_id.format(to=chat_id, id = booking_id, offset = offset)
+            job_id = self.template_job_id.format(bot_id=self.bot_id,to=chat_id, id = booking_id, offset = offset)
             when = booking_time - datetime.timedelta(minutes=offset)
-            await self.scheduler_service.add_job(send_notification, job_id = job_id, when=when, args=(chat_id, text))
+            await self.scheduler_service.add_job(send_reminde, job_id = job_id, when=when, args=(self.bot_id, chat_id, text))
 
     async def remove_reminder(self, booking_id:int, chat_id:int):
         for offset in settings.reminder_minutes_before:
-            job_id = self.template_job_id.format(to=chat_id, id = booking_id, offset = offset)
+            job_id = self.template_job_id.format(bot_id=self.bot_id, to=chat_id, id = booking_id, offset = offset)
             await self.scheduler_service.remove_job(job_id)
 
 
-async def send_notification(chat_id:int, text:str):
-    await NotificationService(BotAppHolder.get_app()).send_message(chat_id, text)
+async def send_reminde(bot_id:int, chat_id:int, text:str):
+    await NotificationService(BotAppHolder.get_app(bot_id)).send_message(chat_id, text)    

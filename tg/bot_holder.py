@@ -1,16 +1,19 @@
 from telegram.ext import Application
+from typing import Dict, List
 
 class BotAppHolder:
-    _bot_instance: Application | None = None
+    _apps:Dict[int, Application] = {}
 
     @classmethod
-    def set_app(cls, bot: Application) -> None:
+    def add_app(cls, app: Application) -> None:
         """Устанавливает экземпляр бота."""
-        cls._bot_instance = bot
+        cls._apps[app.bot.id] = app
 
     @classmethod
-    def get_app(cls) -> Application:
-        """Возвращает экземпляр бота. Вызывает ошибку, если бот не инициализирован."""
-        if cls._bot_instance is None:
-            raise RuntimeError("Bot not initialized! Call BotHolder.set_bot() first.")
-        return cls._bot_instance
+    def get_app(cls, bot_id:int) -> Application:
+        """Возвращает экземпляр бота по ид или None"""
+        return cls._apps.get(bot_id,None)
+    
+    @classmethod
+    def get_list_app(cls)->List[Application]:
+        return list(cls._apps.values())
