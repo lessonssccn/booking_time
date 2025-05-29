@@ -162,7 +162,7 @@ def create_calendar_buttons(actual_slots:ActualTimeslots, year:int=None, month:i
 
     return cal.create_calendar_buttons(year, month)
 
-def create_calendar_range_buttons(year:int, month:int, next_state:State, nav_state:State, set_date=None):
+def create_calendar_range_buttons(year:int, month:int, next_state:State, nav_state:State, set_date:datetime.date=None):
 
     new = datetime.datetime.now()
     date_start = set_date if set_date else (new - datetime.timedelta(days=settings.day_before)).date()
@@ -190,6 +190,10 @@ def create_calendar_range_buttons(year:int, month:int, next_state:State, nav_sta
     if month is None:
         month = new.month
 
+    if set_date:
+        year = set_date.year
+        month = set_date.month
+        
     return cal.create_calendar_buttons(year, month)
 
 def create_time_picker(date:datetime.date, time:datetime.time, default_pefix:State, confirm_prefix:State, cancel_pefix:State):

@@ -31,7 +31,8 @@ USER_ACTIONS = {
 async def process_start_msg(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         user = update.effective_user
-        user = await ServiceFactory.get_user_service(context.bot.id).get_or_create_user(user.id, user.username, user.first_name, user.last_name)
+        user_service = await ServiceFactory.get_user_service(context.bot.id)
+        user = await user_service.get_or_create_user(user.id, user.username, user.first_name, user.last_name)
         await update.message.reply_text(FIRST_MSG.format(date=datetime_to_str(datetime.datetime.now())), reply_markup=create_start_keyboard(update.effective_user.id), parse_mode=ParseMode.HTML)
     except BaseError as e:
         await update.message.reply_text(e.get_user_msg(), reply_markup=create_start_keyboard(update.effective_user.id))
@@ -59,64 +60,74 @@ async def process_press_btn(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 
 async def process_booking_error(update: Update, context: ContextTypes.DEFAULT_TYPE, callback_data:str, e:BaseError):
     await update.callback_query.edit_message_text(f"({datetime.datetime.now()}) {e.get_user_msg()}", reply_markup=create_start_keyboard(update.effective_user.id))
-    await ServiceFactory.get_notification_service(context.bot.id).send_notification_to_channel(e.get_notification_msg()+f"\ntg_id={update.effective_user.id}\ncallback_data={callback_data}", tg_user=update.effective_user)
+    notification_service = await ServiceFactory.get_notification_service(context.bot.id)
+    await notification_service.send_notification_to_channel(e.get_notification_msg()+f"\ntg_id={update.effective_user.id}\ncallback_data={callback_data}", tg_user=update.effective_user)
 
 async def process_unknown_error(update: Update, context: ContextTypes.DEFAULT_TYPE, callback_data:str, e:Exception):
     await update.callback_query.edit_message_text(f"({datetime.datetime.now()}) {UNKNOWN_ERROR_MSG}")
-    await ServiceFactory.get_notification_service(context.bot.id).send_notification_to_channel(UNKNOWN_ERROR_NOTIFICATION + f"\ntg_id={update.effective_user.id}\ncallback_data={callback_data}\nerror={e}", tg_user=update.effective_user)
+    notification_service = await ServiceFactory.get_notification_service(context.bot.id)
+    await notification_service.send_notification_to_channel(UNKNOWN_ERROR_NOTIFICATION + f"\ntg_id={update.effective_user.id}\ncallback_data={callback_data}\nerror={e}", tg_user=update.effective_user)
     
 async def show_calendar(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
-    actual_slots = await ServiceFactory.get_timeslot_service(context.bot.id).get_actual_timeslots()
+    timeslot_service = await ServiceFactory.get_timeslot_service(context.bot.id)
+    actual_slots = await timeslot_service.get_actual_timeslots()
     await update.callback_query.edit_message_text(SELECTE_DATE, reply_markup = create_calendar_buttons(actual_slots, params.year, params.month))
     
 async def show_time_slots(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    timeslot_service = await ServiceFactory.get_timeslot_service(context.bot.id)
     tg_id = update.callback_query.from_user.id
-    list_timeslot = await ServiceFactory.get_timeslot_service(context.bot.id).get_list_timeslot_for_tg_user(params.date, tg_id)
+    list_timeslot = await timeslot_service.get_list_timeslot_for_tg_user(params.date, tg_id)
     await update.callback_query.edit_message_text(
         SELECTE_TIME.format(date= date_to_str(params.date)),
         reply_markup=create_timeslots_buttons(list_timeslot, State.USER_SHOW_CONFIRM_BOOKING, is_admin=False,addition_btns=[[create_btn_show_calendar(OTHER_DATE, State.USER_SHOW_CALENDAR)], [create_start_menu_btn()]])
     )
 
 async def show_confirm_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
-    slot = await ServiceFactory.get_timeslot_service(context.bot.id).get_timeslot_by_id(params.slot_id)
+    timeslot_service = await ServiceFactory.get_timeslot_service(context.bot.id)
+    slot = await timeslot_service.get_timeslot_by_id(params.slot_id)
     await update.callback_query.edit_message_text(
         get_msg_for_slot(slot, CONFIRM_BOOKING_SLOT),
         reply_markup=create_confirm_booking_kb(slot.date, slot.id)
     )
 
 async def booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    booking_service = await ServiceFactory.get_booking_service(context.bot.id)
     tg_user = update.callback_query.from_user
-    booking = await ServiceFactory.get_booking_service(context.bot.id).booking(params.slot_id, tg_user.id)
+    booking = await booking_service.booking(params.slot_id, tg_user.id)
     await update.callback_query.edit_message_text(
         get_msg_for_booking(booking, SUCCESS_BOOKING),
         reply_markup=create_unbooking_keyboard(booking.id))
         
 async def show_list_my_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    booking_service = await ServiceFactory.get_booking_service(context.bot.id)
     tg_id = update.callback_query.from_user.id
-    bookings = await ServiceFactory.get_booking_service(context.bot.id).get_list_actual_booking(tg_id, params.booking_type, params.page)
+    bookings = await booking_service.get_list_actual_booking(tg_id, params.booking_type, params.page)
     await update.callback_query.edit_message_text(
         USER_BOOKING_LIST.format(date = datetime_to_str_with_second(datetime.datetime.now())),
         reply_markup = create_booking_list_buttons(bookings, params.booking_type))
 
 async def show_booking_details(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    booking_service = await ServiceFactory.get_booking_service(context.bot.id)
     tg_id = update.callback_query.from_user.id
-    booking = await ServiceFactory.get_booking_service(context.bot.id).get_booking(params.booking_id, tg_id)
+    booking = await booking_service.get_booking(params.booking_id, tg_id)
     details_msg = DETAILS_BOOKING.format(date = datetime_to_str(booking.date), 
                                          icon = get_status_booking_icon(booking.status), 
                                          created_at = datetime_to_str_with_second(booking.created_at))
     await update.callback_query.edit_message_text(details_msg, reply_markup=create_unbooking_keyboard(booking.id))
 
 async def show_confirm_unbooking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    booking_service = await ServiceFactory.get_booking_service(context.bot.id)
     tg_id = update.callback_query.from_user.id
-    booking = await ServiceFactory.get_booking_service(context.bot.id).get_booking(params.booking_id, tg_id)
+    booking = await booking_service.get_booking(params.booking_id, tg_id)
     await update.callback_query.edit_message_text(
         get_msg_for_booking(booking, CONFIRM_UNBOOKING),
         reply_markup=create_confirm_unbooking_kb(booking.id)
     )
 
 async def unbooking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    booking_service = await ServiceFactory.get_booking_service(context.bot.id)
     tg_id = update.callback_query.from_user.id
-    deleted_booking = await ServiceFactory.get_booking_service(context.bot.id).cancel_booking(params.booking_id, tg_id, False)
+    deleted_booking = await booking_service.cancel_booking(params.booking_id, tg_id, False)
     await update.callback_query.edit_message_text(get_msg_for_booking(deleted_booking, SUCCESS_UNBOOKING),
                                                    reply_markup=create_start_keyboard(tg_id))
 
@@ -127,13 +138,16 @@ async def show_start_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, pa
     await update.callback_query.edit_message_text(FIRST_MSG.format(date=datetime_to_str(datetime.datetime.now())), reply_markup=create_start_keyboard(update.effective_user.id), parse_mode=ParseMode.HTML)
 
 async def show_reminde_settings(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
-    user = await ServiceFactory.get_user_service(context.bot.id).get_user_by_tg_id(update.effective_user.id)
+    user_service = await ServiceFactory.get_user_service(context.bot.id)
+    user = await user_service.get_user_by_tg_id(update.effective_user.id)
     await update.callback_query.edit_message_text(SHOW_REMINDE_SETTINGS_MSG, reply_markup=create_reminde_settings_kb(user))
 
 async def toggle_reminde_inactive(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
-    user = await ServiceFactory.get_user_service(context.bot.id).update_user_reminde_inactive(update.effective_user.id, params.data)
+    user_service = await ServiceFactory.get_user_service(context.bot.id)
+    user = await user_service.update_user_reminde_inactive(update.effective_user.id, params.data)
     await update.callback_query.edit_message_text(SHOW_REMINDE_SETTINGS_MSG, reply_markup=create_reminde_settings_kb(user))
 
 async def toggle_reminde_before(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
-    user = await ServiceFactory.get_user_service(context.bot.id).update_user_reminde_before(update.effective_user.id, params.data)
+    user_service = await ServiceFactory.get_user_service(context.bot.id)
+    user = await user_service.update_user_reminde_before(update.effective_user.id, params.data)
     await update.callback_query.edit_message_text(SHOW_REMINDE_SETTINGS_MSG, reply_markup=create_reminde_settings_kb(user))

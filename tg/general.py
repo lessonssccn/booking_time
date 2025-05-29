@@ -54,7 +54,7 @@ async def run_bot(token:str, stop_event:asyncio.Event):
 
 async def on_startup(application: Application):
     try:
-        BotAppHolder.add_app(application)
+        await BotAppHolder.add_app(application)
         bot = application.bot
 
         await SchedulerHolder.init_scheduler()

@@ -6,12 +6,7 @@ class SchedulerHolder:
     _scheduler_instance: AsyncIOScheduler | None = None
     _ref_count = 0
     _lock = asyncio.Lock()
-
-    @classmethod
-    def get_scheduler(cls) -> AsyncIOScheduler:
-        if cls._scheduler_instance is None:
-                raise RuntimeError("Scheduler not initialized! Call SchedulerHolder.init_scheduler() first.")
-        return cls._scheduler_instance
+    _url:str = "sqlite:///jobs.sqlite"
     
     @classmethod
     async def get_scheduler_async(cls) -> AsyncIOScheduler:
@@ -21,11 +16,11 @@ class SchedulerHolder:
             return cls._scheduler_instance
     
     @classmethod
-    async def init_scheduler(cls, url:str = "sqlite:///jobs.sqlite"):
+    async def init_scheduler(cls):
         async with cls._lock:
             if cls._ref_count==0:
                 cls._scheduler_instance = AsyncIOScheduler(
-                    jobstores={"default": SQLAlchemyJobStore(url)}
+                    jobstores={"default": SQLAlchemyJobStore(cls._url)}
                 )
                 cls._scheduler_instance.start()
                 print("🟢 планировщик запущен")

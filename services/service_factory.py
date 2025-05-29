@@ -19,29 +19,29 @@ from services.booking_reminder_service import BookingReminderService
 
 class ServiceFactory:
     @staticmethod
-    def get_user_service(bot_id:int) -> UserService:
-        return UserService(UserRepository(), ServiceFactory.get_notification_service(bot_id))
+    async def get_user_service(bot_id:int) -> UserService:
+        return UserService(UserRepository(), await ServiceFactory.get_notification_service(bot_id))
 
     @staticmethod    
-    def get_timeslot_service(bot_id:int) -> TimeslotService:
-        return TimeslotService(TimeslotRepository(), DayRepository(), BookingRepository(), UserRepository(), ServiceFactory.get_notification_service(bot_id))
+    async def get_timeslot_service(bot_id:int) -> TimeslotService:
+        return TimeslotService(TimeslotRepository(), DayRepository(), BookingRepository(), UserRepository(), await ServiceFactory.get_notification_service(bot_id))
     
     @staticmethod
-    def get_day_service(bot_id:int) -> DayService:
-        return DayService(DayRepository(), ServiceFactory.get_notification_service(bot_id))
+    async def get_day_service(bot_id:int) -> DayService:
+        return DayService(DayRepository(), await ServiceFactory.get_notification_service(bot_id))
     
     @staticmethod
-    def get_booking_service(bot_id:int) -> BookingService:
-        return BookingService(BookingRepository(), TimeslotRepository(), UserRepository(), DayRepository(), ServiceFactory.get_booking_reminder_service(bot_id),ServiceFactory.get_notification_service(bot_id))
+    async def get_booking_service(bot_id:int) -> BookingService:
+        return BookingService(BookingRepository(), TimeslotRepository(), UserRepository(), DayRepository(), await ServiceFactory.get_booking_reminder_service(bot_id), await ServiceFactory.get_notification_service(bot_id))
 
     @staticmethod
-    def get_notification_service(bot_id:int) -> NotificationService:
-        return NotificationService(BotAppHolder.get_app(bot_id))
+    async def get_notification_service(bot_id:int) -> NotificationService:
+        return NotificationService(await BotAppHolder.get_app(bot_id))
     
     @staticmethod
-    def get_scheduler_service() -> SchedulerService:
-        return SchedulerService(SchedulerHolder.get_scheduler())
+    async def get_scheduler_service() -> SchedulerService:
+        return SchedulerService(await SchedulerHolder.get_scheduler_async())
         
     @staticmethod
-    def get_booking_reminder_service(bot_id:int) -> BookingReminderService:
-        return BookingReminderService(bot_id, ServiceFactory.get_scheduler_service())
+    async def get_booking_reminder_service(bot_id:int) -> BookingReminderService:
+        return BookingReminderService(bot_id, await ServiceFactory.get_scheduler_service())

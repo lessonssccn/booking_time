@@ -55,4 +55,4 @@ class BookingReminderService:
 
 
 async def send_reminde(bot_id:int, chat_id:int, text:str):
-    await NotificationService(BotAppHolder.get_app(bot_id)).send_message(chat_id, text)    
+    await NotificationService(await BotAppHolder.get_app(bot_id)).send_message(chat_id, text)
