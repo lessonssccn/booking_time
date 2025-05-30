@@ -13,3 +13,4 @@ Dockerfile
 *.db-wal
 *.db-shm
 .env
+bot.service-tmpl
