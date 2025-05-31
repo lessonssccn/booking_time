@@ -19,6 +19,7 @@ class Params(BaseModel):
     page:int|None = None
     confirm:int|None = None
     data:int|None = None
+    kb:int|None = None
 
     def __str__(self):
         return build_callback_data(**self.model_dump(exclude_unset=True))

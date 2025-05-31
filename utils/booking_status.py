@@ -3,17 +3,36 @@ CONFIRMED = "confirmed"
 REJECTED = "rejected"
 CANCELED_USER = "canceled-user"
 CANCELED_ADMIN = "canceled-admin"
+NOSHOW_USER = "noshow-user"
+NOSHOW_PROVIDER = "noshow-provider"
+COMPLETED = "completed"
+SYS_ERROR = "sys-error"
 
-STATUC_ICONS = {NEW:"🟡", CONFIRMED:"🟢", REJECTED:"🔴", CANCELED_USER:"⚪", CANCELED_ADMIN:"⚫"}
+STATUC_ICONS = {
+    NEW:"🟡", 
+    CONFIRMED:"🟢", 
+    REJECTED:"🔴", 
+    CANCELED_USER:"⚪", 
+    CANCELED_ADMIN:"⚫", 
+    NOSHOW_USER:"🚫",
+    NOSHOW_PROVIDER:"✖️",
+    COMPLETED:"✅",
+    SYS_ERROR:"⚠️",
+}
 
 ACTUAL_BOOKING = "actual"
 ALL_BOOKING = "all"
 
-STATUS_BOOKING_TYPE = {ACTUAL_BOOKING:(NEW, CONFIRMED), ALL_BOOKING:(NEW, CONFIRMED, REJECTED, CANCELED_USER, CANCELED_ADMIN)}
+STATUS_BOOKING_TYPE = {
+    ACTUAL_BOOKING:(NEW, CONFIRMED, NOSHOW_USER, NOSHOW_PROVIDER, COMPLETED), 
+    ALL_BOOKING:(NEW, CONFIRMED, REJECTED, CANCELED_USER, CANCELED_ADMIN, SYS_ERROR)
+}
 
+def is_new_booking(status:str):
+    return status == NEW
 
 def get_status_booking_icon(status:str):
-    icon = STATUC_ICONS.get(status, "⚫")
+    icon = STATUC_ICONS.get(status, "❓")
     return icon
 
 def get_canceled_status(is_admin:bool):

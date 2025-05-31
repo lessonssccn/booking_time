@@ -15,7 +15,11 @@ OTHER_TIME = "Другое время"
 
 CONFIRM_BOOKING_ADMIN = "🟢 Подтвердить"
 REJECT_BOOKING_ADMIN = "🔴 Отказать"
-DELAY_BOOKING_ADMIN = "✋ Отложить"
+DELAY_BOOKING_ADMIN = "🟡 Отложить"
+USER_NOSHOW = "🚫 Клиент не пришел"
+PROVIDER_NOSHOW = "✖️ Исполнитель не пришел"
+COMPLETED_BOOKING = "✅ Завершено"
+SYS_ERROR_BOOKING = "⚠️ Сбой"
 
 SIGN_UP = "📝 Записаться"
 OTHER_DATE = "Другой день"

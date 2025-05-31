@@ -107,13 +107,52 @@ def create_booking_btn(booking_id:int, status:str, date:datetime.date, state:Sta
     icon = get_status_booking_icon(status)
     return InlineKeyboardButton(f"{icon} {datetime_to_str(date)}", callback_data=get_callback_booking_details(booking_id, status, state, ignore_status))
 
-def confirm_admin_booking_keyboard(booking_id):
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton(CONFIRM_BOOKING_ADMIN, callback_data = str(Params(state=State.ADMIN_CONFIRM_BOOKING , booking_id=booking_id)))],
-        [InlineKeyboardButton(REJECT_BOOKING_ADMIN, callback_data = str(Params(state=State.ADMIN_REJECT_BOOKING , booking_id=booking_id)))],
-        [InlineKeyboardButton(CANCEL, callback_data = str(Params(state=State.ADMIN_CANCEL_BOOKING , booking_id=booking_id)))],
-        [InlineKeyboardButton(DELAY_BOOKING_ADMIN, callback_data = str(Params(state=State.ADMIN_MAIN_MENU , booking_id=booking_id)))],
-    ])
+def create_btn_confirm_booking(booking_id, show_kb=0):
+    return InlineKeyboardButton(CONFIRM_BOOKING_ADMIN, callback_data = str(Params(state=State.ADMIN_CONFIRM_BOOKING , booking_id=booking_id, kb=show_kb)))
+
+def create_btn_reject_booking(booking_id, show_kb=0):
+    return InlineKeyboardButton(REJECT_BOOKING_ADMIN, callback_data = str(Params(state=State.ADMIN_REJECT_BOOKING , booking_id=booking_id, kb=show_kb)))
+
+def create_btn_cancel_booking(booking_id, show_kb=0):
+    return InlineKeyboardButton(CANCEL, callback_data = str(Params(state=State.ADMIN_CANCEL_BOOKING , booking_id=booking_id, kb=show_kb)))
+
+def create_btn_delay_booking(booking_id, show_kb=0):
+    return InlineKeyboardButton(DELAY_BOOKING_ADMIN, callback_data = str(Params(state=State.ADMIN_MAIN_MENU , booking_id=booking_id, kb=show_kb)))
+
+def create_btn_user_noshow_booking(booking_id, show_kb=0):
+    return InlineKeyboardButton(USER_NOSHOW, callback_data = str(Params(state=State.ADMIN_SET_BOOKING_STATUS_USER_NOSHOW , booking_id=booking_id, kb=show_kb)))
+
+def create_btn_provider_noshow_booking(booking_id, show_kb=0):
+    return InlineKeyboardButton(PROVIDER_NOSHOW, callback_data = str(Params(state=State.ADMIN_SET_BOOKING_STATUS_PROVIDER_NOSHOW , booking_id=booking_id, kb=show_kb)))
+
+def create_btn_completed_booking(booking_id, show_kb=0):
+    return InlineKeyboardButton(COMPLETED_BOOKING, callback_data = str(Params(state=State.ADMIN_SET_BOOKING_STATUS_COMPLETED , booking_id=booking_id, kb=show_kb)))
+
+def create_btn_sys_error_booking(booking_id, show_kb=0):
+    return InlineKeyboardButton(SYS_ERROR_BOOKING, callback_data = str(Params(state=State.ADMIN_SET_BOOKING_STATUS_SYS_ERROR , booking_id=booking_id, kb=show_kb)))
+
+def short_admin_booking_keyboard(booking_id, show_kb=0):
+    kb = [ [btn(booking_id, show_kb)] for btn in [create_btn_confirm_booking, create_btn_reject_booking, create_btn_delay_booking] ]
+    return InlineKeyboardMarkup(kb)
+
+def full_admin_booking_keyboard(booking_id, is_new, show_kb=1):
+    if is_new:
+        list_btn = [create_btn_confirm_booking, create_btn_reject_booking, create_btn_delay_booking]
+    else:
+        list_btn = [
+            create_btn_completed_booking,
+            create_btn_user_noshow_booking,
+            create_btn_provider_noshow_booking,
+            create_btn_cancel_booking,
+            create_btn_sys_error_booking
+        ]
+
+    kb = [ [btn(booking_id, show_kb)] for btn in list_btn ]
+
+    if show_kb!=0:
+        kb.append([create_start_menu_btn()])
+
+    return InlineKeyboardMarkup(kb)
 
 def create_empty_btn():
     return InlineKeyboardButton(EMPTY_BTN, callback_data=str(State.IGNORE))

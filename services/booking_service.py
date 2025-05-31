@@ -14,7 +14,7 @@ import math
 from typing import List
 from settings.settings import settings
 from utils.utils import get_msg_for_booking
-from tg.keyboards.keyboards import confirm_admin_booking_keyboard
+from tg.keyboards.keyboards import short_admin_booking_keyboard
 from services.const_text import *
 
 class BookingService:
@@ -80,7 +80,7 @@ class BookingService:
 
         notification_msg = get_msg_for_booking(booking, SUCCESS_BOOKING_MSG)
         await self.notification.send_notification_to_channel(notification_msg)
-        await self.notification.send_message_to_admin(notification_msg, confirm_admin_booking_keyboard(booking.id))
+        await self.notification.send_message_to_admin(notification_msg, short_admin_booking_keyboard(booking.id))
 
         return booking
     

@@ -9,6 +9,7 @@ from errors.errors import *
 from services.service_factory import ServiceFactory
 from tg.callback_params import Params   
 from tg.states.states import State
+from utils.booking_status import is_new_booking, NOSHOW_USER, NOSHOW_PROVIDER, COMPLETED, SYS_ERROR
 
 ADMIN_ACTIONS_FUNC = {
     State.ADMIN_ADD_TIMESLOT_SELECT_DATE:"select_day",
@@ -44,9 +45,13 @@ ADMIN_ACTIONS_FUNC = {
     State.ADMIN_COPY_SCHEDULE_CONFIRM: "process_copy_schedule",
     State.ADMIN_COPY_SCHEDULE_CANCEL: "action_cancel",
 
-    State.ADMIN_CONFIRM_BOOKING:"admin_confirm_reject_booking",
-    State.ADMIN_REJECT_BOOKING:"admin_confirm_reject_booking",
-    State.ADMIN_CANCEL_BOOKING:"admin_cancel_booking",
+    State.ADMIN_CONFIRM_BOOKING:"admin_set_status_booking",
+    State.ADMIN_REJECT_BOOKING:"admin_set_status_booking",
+    State.ADMIN_CANCEL_BOOKING:"admin_set_status_booking",
+    State.ADMIN_SET_BOOKING_STATUS_USER_NOSHOW:"admin_set_status_booking",
+    State.ADMIN_SET_BOOKING_STATUS_PROVIDER_NOSHOW:"admin_set_status_booking",
+    State.ADMIN_SET_BOOKING_STATUS_COMPLETED:"admin_set_status_booking",
+    State.ADMIN_SET_BOOKING_STATUS_SYS_ERROR:"admin_set_status_booking",
 
     State.ADMIN_CUR_DAY_BOOKING:"show_list_booking",
     State.ADMIN_NEXT_DAY_BOOKING:"show_list_booking",
@@ -113,6 +118,19 @@ ADMIN_ACTIONS_MSG = {
 
     State.ADMIN_COPY_SCHEDULE_SELECT_DAY_ON_SRC_WEEK: SELECT_DAY_ON_SRC_WEEK,
     State.ADMIN_COPY_SCHEDULE_SELECT_DAY_ON_DES_WEEK: SELECT_DAY_ON_DES_WEEK,
+
+    State.ADMIN_CANCEL_BOOKING: SUCCESS_CANCEL_BOOKING_ADMIN_FOR_ADMIN,
+
+    State.ADMIN_SET_BOOKING_STATUS_USER_NOSHOW: BOOKING_STATUS_CHANGED,
+    State.ADMIN_SET_BOOKING_STATUS_PROVIDER_NOSHOW: BOOKING_STATUS_CHANGED,
+    State.ADMIN_SET_BOOKING_STATUS_COMPLETED: BOOKING_STATUS_CHANGED,
+    State.ADMIN_SET_BOOKING_STATUS_SYS_ERROR: BOOKING_STATUS_CHANGED,
+}
+STATUS_MAP = {
+    State.ADMIN_SET_BOOKING_STATUS_USER_NOSHOW: NOSHOW_USER,
+    State.ADMIN_SET_BOOKING_STATUS_PROVIDER_NOSHOW: NOSHOW_PROVIDER,
+    State.ADMIN_SET_BOOKING_STATUS_COMPLETED: COMPLETED,
+    State.ADMIN_SET_BOOKING_STATUS_SYS_ERROR: SYS_ERROR,
 }
 #====================================================================================================================
 async def process_admin_action(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
@@ -149,7 +167,7 @@ async def action_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE, para
     await show_admin_msg(update, context, ADMIN_ACTIONS_MSG.get(params.state, ERROR_MSG))
 
 async def show_admin_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
-    await show_admin_msg(update, context, "Что будет делать?")
+    await show_admin_msg(update, context, "Что дальше?")
 #===================================================================================================
 async def add_timeslot_select_time(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     default = State.ADMIN_ADD_TIMESLOT_SELECT_TIME
@@ -200,22 +218,25 @@ async def process_lock_day(update: Update, context: ContextTypes.DEFAULT_TYPE, p
     msg = get_msg_for_day(day, (DAY_UNLOCKED, DAY_LOCKED)[day.lock])
     await show_admin_msg(update, context, msg)
 #==========================================================================================================
-async def admin_confirm_reject_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+async def admin_set_status_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     booking_service = await ServiceFactory.get_booking_service(context.bot.id)
     if params.state == State.ADMIN_CONFIRM_BOOKING:
         func = booking_service.confirm_booking
-    else:
+    elif params.state == State.ADMIN_REJECT_BOOKING:
         func = booking_service.reject_booking
+    elif params.state == State.ADMIN_CANCEL_BOOKING:
+        func = lambda booking_id: booking_service.cancel_booking(booking_id, is_admin=True)
+    else:
+        new_status = STATUS_MAP.get(params.state, None)
+        if new_status!=None:
+            func = lambda booking_id: booking_service.update_status_booking(booking_id, new_status)
+        else:
+            await show_admin_msg(update, context, BOOKING_STATUS_ERROR, 0)
+            return
+
     booking = await func(params.booking_id)
     msg =  get_msg_for_booking(booking, ADMIN_ACTIONS_MSG[params.state]) 
-    await show_admin_msg(update, context, msg)
-
-async def admin_cancel_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
-    booking_service = await ServiceFactory.get_booking_service(context.bot.id)
-    booking = await booking_service.cancel_booking(booking_id=params.booking_id, is_admin=True)
-    msg = get_msg_for_booking(booking, SUCCESS_CANCEL_BOOKING_ADMIN_FOR_ADMIN)
-    await show_admin_msg(update, context, msg)
-
+    await show_admin_msg(update, context, msg, params.kb)
 #=====================================================================================================================================
 async def show_list_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     date_range = {
@@ -250,7 +271,7 @@ async def show_booking_details(update: Update, context: ContextTypes.DEFAULT_TYP
     booking_service = await ServiceFactory.get_booking_service(context.bot.id)
     booking = await booking_service.get_booking_by_id(params.booking_id)
     msg = get_msg_for_booking(booking, BOOKING_DETAILS_ADMIN)
-    await update.callback_query.edit_message_text(msg, reply_markup = confirm_admin_booking_keyboard(booking.id))
+    await update.callback_query.edit_message_text(msg, reply_markup = full_admin_booking_keyboard(booking.id, is_new=is_new_booking(booking.status)))
 #==========================================================================================================================
 async def show_confirm_msg_unbooking_day(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     callback_data_confirm = str(Params(state=State.ADMIN_UNBOOKING_DAY_CONFIRM, date=params.date))
@@ -296,8 +317,11 @@ async def process_copy_schedule(update: Update, context: ContextTypes.DEFAULT_TY
     await show_admin_msg(update, context, msg)
 
 #==========================================================================================================================
-async def show_admin_msg(update: Update, context: ContextTypes.DEFAULT_TYPE, msg: str):
-    await update.callback_query.edit_message_text(msg, reply_markup=get_admin_start_buttons())
+async def show_admin_msg(update: Update, context: ContextTypes.DEFAULT_TYPE, msg: str, show_kb:bool=True):
+    if show_kb:
+        await update.callback_query.edit_message_text(msg, reply_markup=get_admin_start_buttons())
+    else:
+        await update.callback_query.edit_message_text(msg)
 
 async def show_calendar_admin(update: Update, context: ContextTypes.DEFAULT_TYPE, msg:str, next_state: State, params:Params):
     timeslot_service = await ServiceFactory.get_timeslot_service(context.bot.id)
