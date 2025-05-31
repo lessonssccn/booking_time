@@ -5,19 +5,24 @@ from apscheduler.triggers.cron import CronTrigger
 from notifications.constants import *
 from tg.keyboards.keyboards import get_user_start_buttons 
 from utils.utils import get_user_info_as_txt
+from tg.bot_holder import BotAppHolder
 
 DAILY_REMINDER_ID = "daily_reminder_{bot_id}"
 
-async def daily_reminder_func(bot_id:int) -> None:
+async def daily_reminder_func(bot_id:int=None) -> None:
     print("daily_reminder_func start")
     try:
+        if bot_id == None:
+            list_bot = await BotAppHolder.get_list_app()
+            bot_id = list_bot[0]
+
         booking_service = await ServiceFactory.get_booking_service(bot_id)
         list_user = await booking_service.get_inactive_users_missing_future_bookings()
         notification_service = await ServiceFactory.get_notification_service(bot_id)
         await notification_service.send_message_to_users(list_user, REMINDER_TEXT, reply_markup=get_user_start_buttons())
 
-        USER_WITH_REMINDE += "\n".join(list(map(lambda user: get_user_info_as_txt(user, SHORT_USER_INFO), list_user)))
-        await notification_service.send_notification_to_channel(USER_WITH_REMINDE)
+        msg =  USER_WITH_REMINDE + "\n".join(list(map(lambda user: get_user_info_as_txt(user, SHORT_USER_INFO), list_user)))
+        await notification_service.send_notification_to_channel(msg)
     except Exception as e:
         print(f"daily_reminder_func fail error = {e}")
     print("daily_reminder_func finish")
@@ -26,6 +31,12 @@ async def daily_reminder_func(bot_id:int) -> None:
 async def restart_reminder(bot_id, scheduler:AsyncIOScheduler) -> None:
     time = settings.daily_reminder_time
     job_id = DAILY_REMINDER_ID.format(bot_id=bot_id)
+
+    #временно для удаления старого
+    job = scheduler.get_job("daily_reminder")
+    if job:
+        scheduler.remove_job("daily_reminder")
+
     job = scheduler.get_job(job_id)
     print(job)
     if job:
