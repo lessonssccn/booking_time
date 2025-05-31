@@ -56,3 +56,9 @@ class BookingReminderService:
 
 async def send_reminde(bot_id:int, chat_id:int, text:str):
     await NotificationService(await BotAppHolder.get_app(bot_id)).send_message(chat_id, text)
+
+#временно на время перехода потом удалить
+async def send_notification(chat_id:int, text:str):
+    list_bot = await BotAppHolder.get_list_app()
+    for bot in list_bot:
+        await NotificationService(bot).send_message(chat_id, text)
