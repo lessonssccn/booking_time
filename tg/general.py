@@ -1,7 +1,7 @@
 from telegram.ext import Application
 from telegram.constants import ParseMode
 from utils.utils import *
-from tg.constants import BOT_START_NOTIFICATION
+from tg.constants import BOT_START_NOTIFICATION, BOT_STOP_NOTIFICATION
 from scheduler.scheduler_holder import SchedulerHolder
 from reminder.daily_reminder import restart_reminder
 from tg.bot_holder import BotAppHolder
@@ -45,6 +45,13 @@ async def run_bot(token:str, stop_event:asyncio.Event):
     await application.start()
 
     await stop_event.wait()
+
+    message = BOT_STOP_NOTIFICATION.format(date = datetime.datetime.now(), bot_id = application.bot.id, bot_username = application.bot.username)
+    await application.bot.send_message(
+        chat_id=settings.telegram_channel_id,
+        text=message,
+        parse_mode=ParseMode.HTML
+    )
 
     await application.updater.stop()
     await application.stop()
