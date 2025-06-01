@@ -62,6 +62,15 @@ def create_list_booking_btn(state:State, text:str, booking_type:str, page:int=0,
 def get_user_start_buttons():
     return InlineKeyboardMarkup([[create_book_btn()],[create_my_bookings()],[create_settings_btn()]])
 
+def create_booking_kb_admin_reminder():
+    kb = [
+        [create_bookings_list(State.ADMIN_PREV_DAY_BOOKING, BOOKING_PREV_DATE)],
+        [create_bookings_list(State.ADMIN_CUR_DAY_BOOKING, BOOKING_CUR_DATE)],
+        [create_bookings_list(State.ADMIN_NEXT_DAY_BOOKING, BOOKING_NEXT_DATE)],
+        [create_start_menu_btn()]
+    ]
+    return InlineKeyboardMarkup(kb)
+
 def create_btn_show_calendar(text, state:State):
     date = datetime.datetime.now()
     return InlineKeyboardButton(text, callback_data=str(Params(state=state, year=date.year, month=date.month)))
@@ -76,15 +85,19 @@ def get_admin_start_buttons():
          create_btn_show_calendar(REMOVE_SLOT, State.ADMIN_REMOVE_TIMESLOT_SELECT_DATE)],
         [create_btn_show_calendar(LOCK, State.ADMIN_LOCK_TIMESLOT_SELECT_DATE), 
          create_btn_show_calendar(HIDE, State.ADMIN_HIDE_TIMESLOT_SELECT_DATE)],
+
         [InlineKeyboardButton(SCHEDULE_ACTIONS, callback_data=str(State.IGNORE))],
         [create_btn_show_calendar(LOCK_DAY, State.ADMIN_LOCK_DAY_SELECT_DATE), 
          create_btn_show_calendar(UNBOOKING, State.ADMIN_UNBOOKING_DAY_SELECT_DATE)],
         [create_btn_copy_schedule(COPY_SCHEDULE, State.ADMIN_COPY_SCHEDULE_SELECT_DAY_ON_SRC_WEEK)],
+
         [InlineKeyboardButton(BOOKING_ACTIONS, callback_data=str(State.IGNORE))],
         [create_bookings_list(State.ADMIN_CUR_DAY_BOOKING, BOOKING_CUR_DATE), 
-         create_bookings_list(State.ADMIN_NEXT_DAY_BOOKING, BOOKING_NEXT_DATE)],
+         create_bookings_list(State.ADMIN_NEXT_DAY_BOOKING, BOOKING_NEXT_DATE),
+         create_bookings_list(State.ADMIN_PREV_DAY_BOOKING, BOOKING_PREV_DATE),],
         [create_btn_show_calendar(BOOOKING_OTHER_DATE, State.ADMIN_SELECT_OTHER_DAY_BOOKING),
          create_bookings_list(State.ADMIN_ALL_LIST_BOOKING, BOOOKING_ALL_DATE)],
+
         [InlineKeyboardButton(USER_ACTION, callback_data=str(State.IGNORE))],
         [create_book_btn()],
         [create_my_bookings()], 

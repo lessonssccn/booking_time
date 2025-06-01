@@ -42,6 +42,10 @@ class BookingService:
         list_booking = await self.booking_repo.get_list_booking(date, list_status, limit, offset)
         return BookingPage(items=list_booking.list_items, total=list_booking.total_count, page=page, total_page=math.ceil(list_booking.total_count/self.page_size))
 
+    async def get_list_booking_prevday(self, booking_type:str, page:int) -> BookingPage:
+        today = datetime.datetime.now().date()
+        yesterday = today - datetime.timedelta(days=1) 
+        return await self.get_list_booking_by_date(yesterday, booking_type, page)
 
     async def get_list_booking_curday(self, booking_type:str, page:int) -> BookingPage:
         today = datetime.datetime.now().date()

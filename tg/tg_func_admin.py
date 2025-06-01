@@ -54,6 +54,7 @@ ADMIN_ACTIONS_FUNC = {
     State.ADMIN_SET_BOOKING_STATUS_SYS_ERROR:"admin_set_status_booking",
     State.ADMIN_SET_BOOKING_STATUS_COMPLETED_UNPAID:"admin_set_status_booking",
 
+    State.ADMIN_PREV_DAY_BOOKING:"show_list_booking",
     State.ADMIN_CUR_DAY_BOOKING:"show_list_booking",
     State.ADMIN_NEXT_DAY_BOOKING:"show_list_booking",
     State.ADMIN_ALL_LIST_BOOKING:"show_list_booking",
@@ -243,6 +244,7 @@ async def admin_set_status_booking(update: Update, context: ContextTypes.DEFAULT
 #=====================================================================================================================================
 async def show_list_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     date_range = {
+                    State.ADMIN_PREV_DAY_BOOKING:BOOKING_PREV_DATE,
                     State.ADMIN_CUR_DAY_BOOKING:BOOKING_CUR_DATE, 
                     State.ADMIN_NEXT_DAY_BOOKING:BOOKING_NEXT_DATE, 
                     State.ADMIN_ALL_LIST_BOOKING: BOOOKING_ALL_DATE,
@@ -250,7 +252,9 @@ async def show_list_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, 
                 }
     booking_service = await ServiceFactory.get_booking_service(context.bot.id)
 
-    if params.state == State.ADMIN_CUR_DAY_BOOKING:
+    if params.state == State.ADMIN_PREV_DAY_BOOKING:
+        bookings = await booking_service.get_list_booking_prevday(params.booking_type, params.page)
+    elif params.state == State.ADMIN_CUR_DAY_BOOKING:
         bookings = await booking_service.get_list_booking_curday(params.booking_type, params.page)
     elif params.state == State.ADMIN_NEXT_DAY_BOOKING:
         bookings = await booking_service.get_list_booking_nextday(params.booking_type, params.page)

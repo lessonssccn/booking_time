@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     day_before_future_booking:int
     reminder_minutes_before:List[int]
     notification_create_new_user:bool
+    daily_reminder_admin_check_status_booking:bool
     admin_select_other_day_booking_day_before:int
     
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
