@@ -9,7 +9,7 @@ from errors.errors import *
 from services.service_factory import ServiceFactory
 from tg.callback_params import Params   
 from tg.states.states import State
-from utils.booking_status import is_new_booking, NOSHOW_USER, NOSHOW_PROVIDER, COMPLETED, SYS_ERROR
+from utils.booking_status import is_new_booking, NOSHOW_USER, NOSHOW_PROVIDER, COMPLETED, COMPLETED_UNPAID, SYS_ERROR
 
 ADMIN_ACTIONS_FUNC = {
     State.ADMIN_ADD_TIMESLOT_SELECT_DATE:"select_day",
@@ -52,6 +52,7 @@ ADMIN_ACTIONS_FUNC = {
     State.ADMIN_SET_BOOKING_STATUS_PROVIDER_NOSHOW:"admin_set_status_booking",
     State.ADMIN_SET_BOOKING_STATUS_COMPLETED:"admin_set_status_booking",
     State.ADMIN_SET_BOOKING_STATUS_SYS_ERROR:"admin_set_status_booking",
+    State.ADMIN_SET_BOOKING_STATUS_COMPLETED_UNPAID:"admin_set_status_booking",
 
     State.ADMIN_CUR_DAY_BOOKING:"show_list_booking",
     State.ADMIN_NEXT_DAY_BOOKING:"show_list_booking",
@@ -124,12 +125,14 @@ ADMIN_ACTIONS_MSG = {
     State.ADMIN_SET_BOOKING_STATUS_USER_NOSHOW: BOOKING_STATUS_CHANGED,
     State.ADMIN_SET_BOOKING_STATUS_PROVIDER_NOSHOW: BOOKING_STATUS_CHANGED,
     State.ADMIN_SET_BOOKING_STATUS_COMPLETED: BOOKING_STATUS_CHANGED,
+    State.ADMIN_SET_BOOKING_STATUS_COMPLETED_UNPAID: BOOKING_STATUS_CHANGED,
     State.ADMIN_SET_BOOKING_STATUS_SYS_ERROR: BOOKING_STATUS_CHANGED,
 }
 STATUS_MAP = {
     State.ADMIN_SET_BOOKING_STATUS_USER_NOSHOW: NOSHOW_USER,
     State.ADMIN_SET_BOOKING_STATUS_PROVIDER_NOSHOW: NOSHOW_PROVIDER,
     State.ADMIN_SET_BOOKING_STATUS_COMPLETED: COMPLETED,
+    State.ADMIN_SET_BOOKING_STATUS_COMPLETED_UNPAID: COMPLETED_UNPAID,
     State.ADMIN_SET_BOOKING_STATUS_SYS_ERROR: SYS_ERROR,
 }
 #====================================================================================================================

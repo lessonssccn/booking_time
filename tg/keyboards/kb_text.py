@@ -19,6 +19,7 @@ DELAY_BOOKING_ADMIN = "🟡 Отложить"
 USER_NOSHOW = "🚫 Клиент не пришел"
 PROVIDER_NOSHOW = "✖️ Исполнитель не пришел"
 COMPLETED_BOOKING = "✅ Завершено"
+COMPLETED_UNPAID_BOOKING = "💳 Завершено(Не оплачено)"
 SYS_ERROR_BOOKING = "⚠️ Сбой"
 
 SIGN_UP = "📝 Записаться"

@@ -128,6 +128,9 @@ def create_btn_provider_noshow_booking(booking_id, show_kb=0):
 def create_btn_completed_booking(booking_id, show_kb=0):
     return InlineKeyboardButton(COMPLETED_BOOKING, callback_data = str(Params(state=State.ADMIN_SET_BOOKING_STATUS_COMPLETED , booking_id=booking_id, kb=show_kb)))
 
+def create_btn_completed_unpaid_booking(booking_id, show_kb=0):
+    return InlineKeyboardButton(COMPLETED_UNPAID_BOOKING, callback_data = str(Params(state=State.ADMIN_SET_BOOKING_STATUS_COMPLETED_UNPAID , booking_id=booking_id, kb=show_kb)))
+
 def create_btn_sys_error_booking(booking_id, show_kb=0):
     return InlineKeyboardButton(SYS_ERROR_BOOKING, callback_data = str(Params(state=State.ADMIN_SET_BOOKING_STATUS_SYS_ERROR , booking_id=booking_id, kb=show_kb)))
 
@@ -141,6 +144,7 @@ def full_admin_booking_keyboard(booking_id, is_new, show_kb=1):
     else:
         list_btn = [
             create_btn_completed_booking,
+            create_btn_completed_unpaid_booking,
             create_btn_user_noshow_booking,
             create_btn_provider_noshow_booking,
             create_btn_cancel_booking,
