@@ -334,7 +334,7 @@ async def show_calendar_admin(update: Update, context: ContextTypes.DEFAULT_TYPE
                                  month=params.month, 
                                  next_state=next_state, 
                                  nav_state=params.state, 
-                                 is_admin = True)
+                                 is_admin = True, cur_state=params.state)
     await update.callback_query.edit_message_text(msg, reply_markup = kb) 
 
 async def show_range_calendar_admin(update: Update, context: ContextTypes.DEFAULT_TYPE, msg:str, next_state: State, params:Params):

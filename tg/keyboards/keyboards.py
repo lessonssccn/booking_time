@@ -63,8 +63,8 @@ def get_user_start_buttons():
     return InlineKeyboardMarkup([[create_book_btn()],[create_my_bookings()],[create_settings_btn()]])
 
 def create_btn_show_calendar(text, state:State):
-    now = datetime.datetime.now()
-    return InlineKeyboardButton(text, callback_data=str(Params(state=state, year=now.year, month=now.month)))
+    date = datetime.datetime.now()
+    return InlineKeyboardButton(text, callback_data=str(Params(state=state, year=date.year, month=date.month)))
 
 def create_btn_copy_schedule(text, state:State):
     return InlineKeyboardButton(text, callback_data=str(Params(state=state)))
@@ -185,11 +185,16 @@ def create_booking_list_buttons(bookings:BookingPage, booking_type:str=ACTUAL_BO
     return InlineKeyboardMarkup(list_btn)
 
 
-def create_calendar_buttons(actual_slots:ActualTimeslots, year:int=None, month:int=None, next_state:State = State.USER_SHOW_TIMESLOTS, nav_state:State = State.USER_SHOW_CALENDAR, is_admin:bool=False):
+def create_calendar_buttons(actual_slots:ActualTimeslots, year:int=None, month:int=None, next_state:State = State.USER_SHOW_TIMESLOTS, nav_state:State = State.USER_SHOW_CALENDAR, is_admin:bool=False, cur_state:State=None):
     additional_btns = []
     additional_btns.append(create_start_menu_btn())
 
-    cal = Calendar(actual_slots.min_date, 
+    min_date = actual_slots.min_date
+
+    if cur_state == State.ADMIN_SELECT_OTHER_DAY_BOOKING:
+        min_date = min_date - datetime.timedelta(days=settings.admin_select_other_day_booking_day_before)
+
+    cal = Calendar(min_date, 
                    actual_slots.max_date, 
                    callback_data_default_prefix = lambda date: f"state={next_state}&date={date}",
                    callback_data_next = lambda year_next, month_next : f"state={nav_state}&year={year_next}&month={month_next}",
