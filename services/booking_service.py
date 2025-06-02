@@ -7,7 +7,7 @@ from services.booking_reminder_service import BookingReminderService
 from services.notifications_service import NotificationService
 from dto.booking_models import BookingPage
 from dto.models import BookingDTO, UserDTO
-from utils.booking_status import get_locked_status, get_actual_status, get_list_status_by_type, get_canceled_status, can_update_status, get_admin_confirm_status, get_admin_reject_status
+from utils.booking_status import get_locked_status, get_actual_status, get_list_status_by_type, get_canceled_status, can_update_status, get_admin_confirm_status, get_admin_reject_status, get_active_user_status
 from errors.errors import *
 from services.utils import get_limit_and_offset, get_actual_date_range
 import math
@@ -146,4 +146,4 @@ class BookingService:
         before = (now - datetime.timedelta(days=settings.day_after_last_active)).date()
         yesterday = ((now - datetime.timedelta(days=1)).date()) 
 
-        return await self.booking_repo.find_reminde_users_with_appointments_in_period_a_but_not_in_b(before, yesterday, get_actual_status(), now.date(), future, get_actual_status())
+        return await self.booking_repo.find_reminde_users_with_appointments_in_period_a_but_not_in_b(before, yesterday, get_active_user_status(), now.date(), future, get_actual_status())

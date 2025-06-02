@@ -49,6 +49,9 @@ def get_locked_status():
 def get_actual_status():
     return (NEW, CONFIRMED,)
 
+def get_active_user_status():
+    return (NEW, CONFIRMED, NOSHOW_PROVIDER, NOSHOW_USER, COMPLETED, COMPLETED_UNPAID)
+
 def get_list_status_by_type(type_booking:str):
     return STATUS_BOOKING_TYPE.get(type_booking, (CONFIRMED, ))
 

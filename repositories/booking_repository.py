@@ -149,7 +149,6 @@ class BookingRepository:
                 .where(and_(Booking.date_only.between(start_a, end_a), Booking.status.in_(status_a), User.remind_inactive==True))
                 .where(not_(subquery))
             )
-            
             result = await session.execute(stmt)
             users = result.scalars().all()
             return list(map(lambda user: UserDTO.model_validate(user), users))
