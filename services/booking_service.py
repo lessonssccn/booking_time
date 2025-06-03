@@ -7,7 +7,7 @@ from services.booking_reminder_service import BookingReminderService
 from services.notifications_service import NotificationService
 from dto.booking_models import BookingPage
 from dto.models import BookingDTO, UserDTO
-from utils.booking_status import get_locked_status, get_actual_status, get_list_status_by_type, get_canceled_status, can_update_status, get_admin_confirm_status, get_admin_reject_status, get_active_user_status
+from utils.booking_status import get_locked_status, get_actual_status, get_list_status_by_type, get_canceled_status, can_update_status, get_admin_confirm_status, get_admin_reject_status, get_active_user_status, get_unpaid_status
 from errors.errors import *
 from services.utils import get_limit_and_offset, get_actual_date_range
 import math
@@ -55,6 +55,14 @@ class BookingService:
         today = datetime.datetime.now().date()
         tomorrow = today + datetime.timedelta(days=1) 
         return await self.get_list_booking_by_date(tomorrow, booking_type, page)
+    
+    async def get_list_booking_unpaid(self, page:int) -> BookingPage:
+        return await self.get_list_booking_by_status(get_unpaid_status(), page)
+
+    async def get_list_booking_by_status(self, status:List[str], page:int) -> BookingPage:
+        limit, offset = get_limit_and_offset(self.page_size, page)
+        list_booking = await self.booking_repo.get_all_booking_by_date_range(status, None, None, limit, offset)
+        return BookingPage(items=list_booking.list_items, total=list_booking.total_count, page=page, total_page=math.ceil(list_booking.total_count/self.page_size))
 
     async def get_all_actual_booking(self, booking_type:str, page:int) -> BookingPage:
         list_status = get_list_status_by_type(booking_type)

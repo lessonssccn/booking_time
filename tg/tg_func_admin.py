@@ -54,6 +54,7 @@ ADMIN_ACTIONS_FUNC = {
     State.ADMIN_SET_BOOKING_STATUS_SYS_ERROR:"admin_set_status_booking",
     State.ADMIN_SET_BOOKING_STATUS_COMPLETED_UNPAID:"admin_set_status_booking",
 
+    State.ADMIN_UNPAID_BOOKING:"show_list_booking",
     State.ADMIN_PREV_DAY_BOOKING:"show_list_booking",
     State.ADMIN_CUR_DAY_BOOKING:"show_list_booking",
     State.ADMIN_NEXT_DAY_BOOKING:"show_list_booking",
@@ -244,6 +245,7 @@ async def admin_set_status_booking(update: Update, context: ContextTypes.DEFAULT
 #=====================================================================================================================================
 async def show_list_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     date_range = {
+                    State.ADMIN_UNPAID_BOOKING:BOOKING_UNPAID_ALL,
                     State.ADMIN_PREV_DAY_BOOKING:BOOKING_PREV_DATE,
                     State.ADMIN_CUR_DAY_BOOKING:BOOKING_CUR_DATE, 
                     State.ADMIN_NEXT_DAY_BOOKING:BOOKING_NEXT_DATE, 
@@ -252,7 +254,9 @@ async def show_list_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, 
                 }
     booking_service = await ServiceFactory.get_booking_service(context.bot.id)
 
-    if params.state == State.ADMIN_PREV_DAY_BOOKING:
+    if params.state == State.ADMIN_UNPAID_BOOKING:
+        bookings = await booking_service.get_list_booking_unpaid(params.page)
+    elif params.state == State.ADMIN_PREV_DAY_BOOKING:
         bookings = await booking_service.get_list_booking_prevday(params.booking_type, params.page)
     elif params.state == State.ADMIN_CUR_DAY_BOOKING:
         bookings = await booking_service.get_list_booking_curday(params.booking_type, params.page)
@@ -272,7 +276,9 @@ async def show_list_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, 
             nav_state=params.state, 
             create_back_btn=lambda: create_back_btn(State.ADMIN_MAIN_MENU), 
             ignore_status=True,
-            date=params.date))
+            date=params.date,
+            type_switcher = params.state != State.ADMIN_UNPAID_BOOKING
+            ))
 
 async def show_booking_details(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     booking_service = await ServiceFactory.get_booking_service(context.bot.id)

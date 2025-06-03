@@ -64,10 +64,11 @@ def get_user_start_buttons():
 
 def create_booking_kb_admin_reminder():
     kb = [
+        [create_bookings_list(State.ADMIN_UNPAID_BOOKING, BOOKING_UNPAID_ALL)],
         [create_bookings_list(State.ADMIN_PREV_DAY_BOOKING, BOOKING_PREV_DATE)],
         [create_bookings_list(State.ADMIN_CUR_DAY_BOOKING, BOOKING_CUR_DATE)],
         [create_bookings_list(State.ADMIN_NEXT_DAY_BOOKING, BOOKING_NEXT_DATE)],
-        [create_start_menu_btn()]
+        [create_start_menu_btn()],
     ]
     return InlineKeyboardMarkup(kb)
 
@@ -95,7 +96,8 @@ def get_admin_start_buttons():
         [create_bookings_list(State.ADMIN_CUR_DAY_BOOKING, BOOKING_CUR_DATE), 
          create_bookings_list(State.ADMIN_NEXT_DAY_BOOKING, BOOKING_NEXT_DATE),
          create_bookings_list(State.ADMIN_PREV_DAY_BOOKING, BOOKING_PREV_DATE),],
-        [create_btn_show_calendar(BOOOKING_OTHER_DATE, State.ADMIN_SELECT_OTHER_DAY_BOOKING),
+        [create_bookings_list(State.ADMIN_UNPAID_BOOKING, BOOKING_UNPAID_ALL),
+         create_btn_show_calendar(BOOOKING_OTHER_DATE, State.ADMIN_SELECT_OTHER_DAY_BOOKING),
          create_bookings_list(State.ADMIN_ALL_LIST_BOOKING, BOOOKING_ALL_DATE)],
 
         [InlineKeyboardButton(USER_ACTION, callback_data=str(State.IGNORE))],
@@ -174,7 +176,7 @@ def full_admin_booking_keyboard(booking_id, is_new, show_kb=1):
 def create_empty_btn():
     return InlineKeyboardButton(EMPTY_BTN, callback_data=str(State.IGNORE))
 
-def create_booking_list_buttons(bookings:BookingPage, booking_type:str=ACTUAL_BOOKING, next_state:State = State.USER_BOOKING_DETAILS, nav_state:State = State.USER_SHOW_LIST_MY_BOOKING, create_back_btn = create_book_btn, ignore_status:bool=False, date:datetime.date=None):
+def create_booking_list_buttons(bookings:BookingPage, booking_type:str=ACTUAL_BOOKING, next_state:State = State.USER_BOOKING_DETAILS, nav_state:State = State.USER_SHOW_LIST_MY_BOOKING, create_back_btn = create_book_btn, ignore_status:bool=False, date:datetime.date=None, type_switcher=True):
     page = bookings.page
     prev_page, next_page = calc_prev_next_page(page, bookings.total_page)
     
@@ -188,9 +190,14 @@ def create_booking_list_buttons(bookings:BookingPage, booking_type:str=ACTUAL_BO
             ])
     
     
-    btn_switch_type = create_list_booking_btn(nav_state, SHOW_ALL, ALL_BOOKING, 0, date) if booking_type == ACTUAL_BOOKING else create_list_booking_btn(nav_state, SHOW_ACTUAL, ACTUAL_BOOKING, 0, date)
-    btn_refresh = create_list_booking_btn(nav_state, REFRESH_BTN, booking_type, 0, date)
-    list_btn.append([btn_refresh, btn_switch_type])
+    if type_switcher and booking_type is not None:
+        btn_switch_type = create_list_booking_btn(nav_state, SHOW_ALL, ALL_BOOKING, 0, date) if booking_type == ACTUAL_BOOKING else create_list_booking_btn(nav_state, SHOW_ACTUAL, ACTUAL_BOOKING, 0, date)
+        btn_refresh = create_list_booking_btn(nav_state, REFRESH_BTN, booking_type, 0, date)
+        list_btn.append([btn_refresh, btn_switch_type])
+    else:
+        btn_refresh = create_list_booking_btn(nav_state, REFRESH_BTN, booking_type, 0, date)
+        list_btn.append([btn_refresh])
+
     list_btn.append([create_start_menu_btn()])
     # list_btn.append([create_back_btn()])
 

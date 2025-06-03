@@ -24,10 +24,13 @@ STATUC_ICONS = {
 
 ACTUAL_BOOKING = "actual"
 ALL_BOOKING = "all"
+UNPAID_BOOKING = "unpaid"
+
 
 STATUS_BOOKING_TYPE = {
     ACTUAL_BOOKING:(NEW, CONFIRMED, NOSHOW_USER, NOSHOW_PROVIDER, COMPLETED, COMPLETED_UNPAID), 
-    ALL_BOOKING:(NEW, CONFIRMED, REJECTED, CANCELED_USER, CANCELED_ADMIN, SYS_ERROR)
+    ALL_BOOKING:(NEW, CONFIRMED, REJECTED, CANCELED_USER, CANCELED_ADMIN, SYS_ERROR),
+    UNPAID_BOOKING:(COMPLETED_UNPAID,)
 }
 
 def is_new_booking(status:str):
@@ -60,6 +63,9 @@ def get_admin_confirm_status():
 
 def get_admin_reject_status():
     return REJECTED
+
+def get_unpaid_status():
+    return (COMPLETED_UNPAID, )
 
 def can_update_status(status:str):
     return status != CANCELED_USER

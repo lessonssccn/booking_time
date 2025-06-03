@@ -20,9 +20,8 @@ async def reminder_user_without_booking(bot_id) -> None:
 
 async def reminder_admin_check_status_booking(bot_id) -> None:
     try:
-        if settings.daily_reminder_admin_check_status_booking:
-            notification_service = await ServiceFactory.get_notification_service(bot_id)
-            await notification_service.send_message_to_admin(REMINDER_TEXT_CHECK_STAUS_BOOKING, create_booking_kb_admin_reminder())
+        notification_service = await ServiceFactory.get_notification_service(bot_id)
+        await notification_service.send_message_to_admin(REMINDER_TEXT_CHECK_STAUS_BOOKING, create_booking_kb_admin_reminder())
     except Exception as e:
         print(f"Fail reminder_admin_check_status_booking  error = {e}")
 
@@ -38,7 +37,9 @@ async def daily_reminder_func(bot_id:int=None) -> None:
         return
 
     await reminder_user_without_booking(bot_id)
-    await reminder_admin_check_status_booking(bot_id)
+    
+    if settings.daily_reminder_admin_check_status_booking:
+        await reminder_admin_check_status_booking(bot_id)
 
     print("daily_reminder_func finish")
 

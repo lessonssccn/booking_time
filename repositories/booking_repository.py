@@ -104,12 +104,16 @@ class BookingRepository:
 
     async def get_all_booking_by_date_range(self, status:List[str], min_date:datetime.date, max_date:datetime.date, limit:int, offset:int) -> BookingList:
         async with get_session() as session:
-            filters = [Booking.status.in_(status), Booking.date_only >=min_date, Booking.date_only<=max_date]
-            list_booking = await self.booking_dao.get_list_booking(session,filters, limit, offset)
+            filters = [Booking.status.in_(status)]
+            if min_date:
+                filters.append(Booking.date_only >=min_date)
+            if max_date:
+                filters.append(Booking.date_only<=max_date)
+            list_booking = await self.booking_dao.get_list_booking(session, filters, limit, offset)
             total_count = await self.booking_dao.get_count_booking(session, filters)
             result = BookingList(list_items=list(map(lambda booking: BookingDTO.model_validate(booking), list_booking)), total_count=total_count)
             return result
-        
+            
     async def get_list_booking_for_user_by_date_range(self, user_id:int, status:List[str], min_date:datetime.date, max_date:datetime.date, limit:int, offset:int)->BookingList:
         async with get_session() as session:
             filters = [Booking.user_id == user_id, Booking.status.in_(status), Booking.date_only>=min_date, Booking.date_only<=max_date]
