@@ -3,10 +3,11 @@ from services.scheduler_service import SchedulerService
 from services.notifications_service import NotificationService
 from tg.bot_holder import BotAppHolder
 from typing import List
-from notifications.notification_func import create_user_notification_booking_msg, create_admin_notification_booking_msg
+from notifications.notification_func import create_user_notification_booking_msg, create_admin_notification_booking_msg, prfix_reminder
 from utils.utils import get_channel_id
 import datetime
 from settings.settings import settings
+from telegram.constants import ParseMode
 
 class BookingReminderService:
     def __init__(self, bot_id:int, scheduler_service: SchedulerService, reminder_offsets_minutes:List[int]=[60,15,5]):
@@ -46,7 +47,8 @@ class BookingReminderService:
         for offset in reminder_offsets_minutes:
             job_id = self.template_job_id.format(bot_id=self.bot_id,to=chat_id, id = booking_id, offset = offset)
             when = booking_time - datetime.timedelta(minutes=offset)
-            await self.scheduler_service.add_job(send_reminde, job_id = job_id, when=when, args=(self.bot_id, chat_id, text))
+            text_with_prefix = f"{prfix_reminder(offset)}\n{text}"
+            await self.scheduler_service.add_job(send_reminde, job_id = job_id, when=when, args=(self.bot_id, chat_id, text_with_prefix))
 
     async def remove_reminder(self, booking_id:int, chat_id:int):
         for offset in settings.reminder_minutes_before:
@@ -55,10 +57,10 @@ class BookingReminderService:
 
 
 async def send_reminde(bot_id:int, chat_id:int, text:str):
-    await NotificationService(await BotAppHolder.get_app(bot_id)).send_message(chat_id, text)
+    await NotificationService(await BotAppHolder.get_app(bot_id)).send_message(chat_id, text, parse_mode=ParseMode.HTML)
 
 #временно на время перехода потом удалить
 async def send_notification(chat_id:int, text:str):
     list_bot = await BotAppHolder.get_list_app()
     for bot in list_bot:
-        await NotificationService(bot).send_message(chat_id, text)
+        await NotificationService(bot).send_message(chat_id, text, parse_mode=ParseMode.HTML)

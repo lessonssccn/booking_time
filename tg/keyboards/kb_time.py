@@ -2,7 +2,7 @@ import datetime
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from utils.utils import *
 class TimeKeyboard:
-    def __init__(self, date:datetime.date, time:datetime.time, default_pefix:str, confirm_prefix:str, cancel_pefix:str , delta_mm:int=15, disable_prefix:str="0"):
+    def __init__(self, date:datetime.date, time:datetime.time, default_pefix:str, confirm_prefix:str, cancel_pefix:str , delta_mm:int=5, disable_prefix:str="0"):
         self.date = date
         self.time = time
         self.default_pefix = default_pefix
