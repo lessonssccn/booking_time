@@ -15,21 +15,24 @@ class BookingRepository:
         self.booking_dao = BookingDao()
         self.timeslot_dao = TimeslotDao()
 
-    async def add_new_booking(self, timeslot_id, user_id) -> BookingDTO:
+    async def add_new_booking(self, timeslot_id, user_id, update_slot=True, status=None) -> BookingDTO:
         async with get_session_with_commit() as session:
             timeslot = await self.timeslot_dao.find_one_by_id(session, timeslot_id)
             if not timeslot:
                 raise BookingError(error_code=ErrorCode.TIMESLOT_NOT_FOUND, timeslot_id = timeslot_id)
             
             new_booking = NewBooking(user_id=user_id, time_slot_id=timeslot_id, date=datetime.datetime.combine(timeslot.date, timeslot.time))
+            if status:
+                new_booking.status = status
             booking = await self.booking_dao.add(session, new_booking.model_dump())
             if not booking:
                 raise BookingError(error_code=ErrorCode.ERROR_CREATE_BOOKING, timeslot_id = timeslot_id, user_id = user_id)
 
-            update_slot = UpdateTimeslot(capacity=timeslot.capacity-1)
-            updated_row = await self.timeslot_dao.update(session, TimeSlot.id == timeslot_id, update_slot.model_dump(exclude_unset=True))
-            if updated_row!=1:
-                raise BookingError(error_code=ErrorCode.ERROR_UPDATE_CAPACITY, timeslot_id = timeslot_id)
+            if update_slot:
+                update_slot = UpdateTimeslot(capacity=timeslot.capacity-1)
+                updated_row = await self.timeslot_dao.update(session, TimeSlot.id == timeslot_id, update_slot.model_dump(exclude_unset=True))
+                if updated_row!=1:
+                    raise BookingError(error_code=ErrorCode.ERROR_UPDATE_CAPACITY, timeslot_id = timeslot_id)
             
             return BookingDTO.model_validate(await self.booking_dao.get_one_booking(session, [Booking.id == booking.id]))
                   
@@ -64,7 +67,7 @@ class BookingRepository:
             except:
                 return False
 
-    async def cancel_booking(self, booking_id: int, user_id:int, cancel_status:str)->BookingDTO:
+    async def cancel_booking(self, booking_id: int, user_id:int, cancel_status:str, update_slot:bool=True)->BookingDTO:
         async with get_session_with_commit() as session:
             filters = [Booking.id == booking_id]
             if user_id!=None:
@@ -75,10 +78,12 @@ class BookingRepository:
                 return BookingError(error_code=ErrorCode.ERROR_UPDATE_STATUS_BOOKING, booking_id = booking_id, user_id = user_id)
 
             booking = await self.booking_dao.get_one_booking(session, filters)
-
-            update_date = UpdateTimeslot(capacity=booking.time_slot.capacity+1).model_dump(exclude_unset=True)
-            if not await self.timeslot_dao.update(session, TimeSlot.id == booking.time_slot_id, update_date):
-                return BookingError(error_code=ErrorCode.ERROR_UPDATE_STATUS_BOOKING, booking_id = booking_id, user_id = user_id, timeslot_id = booking.time_slot_id)
+            
+            if update_slot:
+                update_date = UpdateTimeslot(capacity=booking.time_slot.capacity+1).model_dump(exclude_unset=True)
+                if not await self.timeslot_dao.update(session, TimeSlot.id == booking.time_slot_id, update_date):
+                    return BookingError(error_code=ErrorCode.ERROR_UPDATE_STATUS_BOOKING, booking_id = booking_id, user_id = user_id, timeslot_id = booking.time_slot_id)
+            
             return BookingDTO.model_validate(await self.booking_dao.get_one_booking(session, [Booking.id == booking_id]))
 
     async def get_list_booking_for_user(self, date: datetime.date, user_id:int, list_status:List[str])->List[BookingDTO]:
@@ -93,6 +98,12 @@ class BookingRepository:
             if booking:
                 return BookingDTO.model_validate(booking)
             raise BookingError(error_code=ErrorCode.BOOKING_NOT_FOUND, booking_id = booking_id, user_id = user_id)
+
+    async def find_list_booking_by_slot_id_and_list_status(self, slot_id:int, list_status:List[str])->List[BookingDTO]:
+        async with get_session() as session:
+            filters = [Booking.time_slot_id == slot_id, Booking.status.in_(list_status)]
+            list_booking = await self.booking_dao.get_list_booking(session, filters, None, None)
+            return list(map(lambda booking: BookingDTO.model_validate(booking), list_booking))
 
     async def get_list_booking(self, date: datetime.date, list_status:List[str], limit:int|None=None, offset:int|None=None)->BookingList:
         async with get_session() as session:

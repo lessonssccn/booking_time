@@ -7,14 +7,14 @@ from services.booking_reminder_service import BookingReminderService
 from services.notifications_service import NotificationService
 from dto.booking_models import BookingPage
 from dto.models import BookingDTO, UserDTO
-from utils.booking_status import get_locked_status, get_actual_status, get_list_status_by_type, get_canceled_status, can_update_status, get_admin_confirm_status, get_admin_reject_status, get_active_user_status, get_unpaid_status
+from utils.booking_status import get_disable_status, get_new_status, get_locked_status, get_actual_status, get_list_status_by_type, get_canceled_status, can_update_status, get_admin_confirm_status, get_admin_reject_status, get_active_user_status, get_unpaid_status, get_watch_status
 from errors.errors import *
 from services.utils import get_limit_and_offset, get_actual_date_range
 import math
 from typing import List
 from settings.settings import settings
-from utils.utils import get_msg_for_booking
-from tg.keyboards.keyboards import short_admin_booking_keyboard
+from utils.utils import get_msg_for_booking, get_user_info_as_txt
+from tg.keyboards.keyboards import short_admin_booking_keyboard, user_booking_watch_slot_keyboard
 from services.const_text import *
 
 class BookingService:
@@ -79,6 +79,55 @@ class BookingService:
         list_booking = await self.booking_repo.get_list_booking_for_user_by_date_range(user.id, list_status, min_date, max_date, limit, offset)
         return BookingPage(items=list_booking.list_items, total=list_booking.total_count, page=page, total_page=math.ceil(list_booking.total_count/self.page_size))
 
+    async def exsist_actual_booking_by_slot_id(self, timslot_id:int) -> bool:
+        return await self.booking_repo.exsist_booking(timslot_id, get_actual_status())
+    
+    async def exsist_actual_booking_by_slot_id_for_tg_id(self, timslot_id:int, tg_id:int) -> bool:
+        user = await self.user_repo.get_user_by_tg_id(tg_id)
+        return await self.booking_repo.exsist_booking_for_user(user.id, timslot_id, get_actual_status())
+    
+    async def exsist_watching_booking_by_slot_id_for_tg_id(self, timslot_id:int, tg_id:int) -> bool:
+        user = await self.user_repo.get_user_by_tg_id(tg_id)
+        return await self.booking_repo.exsist_booking_for_user(user.id, timslot_id, [get_watch_status()])
+    
+    async def watching(self, timslot_id:int, tg_id:int) -> BookingDTO:
+        if not await self.booking_repo.exsist_booking(timslot_id, get_locked_status()):
+            raise BookingError(error_code=ErrorCode.TIMESLOT_FREE, timslot_id=timslot_id)
+        
+        user = await self.user_repo.get_user_by_tg_id(tg_id)
+        
+        if await self.booking_repo.exsist_booking_for_user(user.id, timslot_id, get_actual_status()):
+            raise BookingError(error_code=ErrorCode.TIMESLOT_OCCUPIED_CURRENT_USER, user_id = user.id, tg_id = tg_id, timslot_id = timslot_id)
+        
+        if await self.booking_repo.exsist_booking_for_user(user.id, timslot_id, [get_watch_status()]):
+            raise BookingError(error_code=ErrorCode.TIMESLOT_WATCHING_CURRENT_USER, user_id = user.id, tg_id = tg_id, timslot_id = timslot_id)
+        
+        booking = await self.booking_repo.add_new_booking(timslot_id, user.id, update_slot=False, status=get_watch_status())
+
+        notification_msg = get_msg_for_booking(booking, SUCCESS_WATCH_BOOKING_MSG)
+        await self.notification.send_notification_to_channel(notification_msg)
+
+        return booking
+
+    async def booking_watching_slot(self, booking_id:int, tg_id:int) -> BookingDTO:
+        booking = await self.booking_repo.get_booking_by_id(booking_id)
+        if booking.user.tg_id != tg_id:
+            raise BookingError(error_code=ErrorCode.TIMESLOT_OCCUPIED, timslot_id=booking.time_slot_id)
+
+        if await self.booking_repo.exsist_booking(booking.time_slot_id, get_locked_status()):
+            raise BookingError(error_code=ErrorCode.TIMESLOT_OCCUPIED, timslot_id=booking.time_slot_id)
+
+        if not await self.booking_repo.update_staust_booking(booking_id, get_new_status()):
+            raise BookingError(error_code=ErrorCode.ERROR_UPDATE_STATUS_BOOKING, booking_id = booking_id)
+
+
+        notification_msg = get_msg_for_booking(booking, SUCCESS_BOOKING_MSG)
+        await self.notification.send_notification_to_channel(notification_msg)
+        await self.notification.send_message_to_admin(notification_msg, short_admin_booking_keyboard(booking.id))
+
+        return await self.booking_repo.get_booking_by_id(booking_id)
+
+
     async def booking(self, timslot_id:int, tg_id:int) -> BookingDTO:
         if await self.booking_repo.exsist_booking(timslot_id, get_locked_status()):
             raise BookingError(error_code=ErrorCode.TIMESLOT_OCCUPIED, timslot_id=timslot_id)
@@ -96,7 +145,25 @@ class BookingService:
 
         return booking
     
+    async def cancel_watching(self, booking_id:int, tg_id:int)->BookingDTO:
+        user = await self.user_repo.get_user_by_tg_id(tg_id)
+        result = await self.booking_repo.cancel_booking(booking_id, user.id, get_canceled_status(False), update_slot=False)
+
+        if result:
+            await self.notification.send_notification_to_channel(get_msg_for_booking(result, SUCCESS_UNWATCH_BOOKING_MSG))
+
+        return result
+
+
     async def cancel_booking(self, booking_id:int, tg_id:int|None=None, is_admin:bool=False)->BookingDTO:
+        booking = await self.booking_repo.get_booking_by_id(booking_id)
+        if is_admin and booking.status == get_watch_status():
+            raise BookingError(error_code=ErrorCode.ERROR_ADMIN_CANCEL_WATCHING, booking_id = booking_id)
+        elif not is_admin and booking.status == get_watch_status():
+            return self.cancel_watching(booking_id, tg_id)
+        elif booking.status in get_disable_status():
+            raise BookingError(error_code=ErrorCode.ERROR_CANCEL_BOOKING, booking_id = booking_id)
+        
         if tg_id!=None and not is_admin:
             user = await self.user_repo.get_user_by_tg_id(tg_id)
             result = await self.booking_repo.cancel_booking(booking_id, user.id, get_canceled_status(is_admin))
@@ -108,14 +175,33 @@ class BookingService:
             await self.notification.send_notification_to_channel(get_msg_for_booking(result, SUCCESS_UNBOOKING_ADMIN_MSG if is_admin else SUCCESS_UNBOOKING_MSG ))
             if is_admin:
                 await self.notification.send_message_to_one_user(result.user, get_msg_for_booking(result, SUCCESS_UNBOOKING_ADMIN_MSG_FOR_USER))
-            
+            await self.notify_observers(result)
+
         return result
+    
+    async def notify_observers(self, booking:BookingDTO)->None:
+        list_status = [get_watch_status()]
+        list_booking = await self.booking_repo.find_list_booking_by_slot_id_and_list_status(booking.time_slot_id, list_status)
+        
+        list_user = []
+        
+        for booking in list_booking:
+            list_user.append(booking.user)
+            await self.notification.send_message_to_one_user(booking.user, get_msg_for_booking(booking, WATCH_BOOKING_FREE_MSG), reply_markup=user_booking_watch_slot_keyboard(booking.id))
+        
+        if len(list_user)>0:
+            msg = LIST_USER_HOW_GET_MSG_FREE_SLOT.format(list_user = "\n".join(map(lambda user: get_user_info_as_txt(user, SHORT_USER_INFO) ,list_user)))
+            await self.notification.send_notification_to_channel(msg)
+
 
     async def cancel_bookings_day(self, date:datetime.date) -> List[BookingDTO]: 
         list_booking = await self.booking_repo.get_list_booking(date, get_actual_status())
         result = []
         for booking in list_booking.list_items:
-            result.append(await self.cancel_booking(booking.id, None, True))
+            try:
+                result.append(await self.cancel_booking(booking.id, None, True))
+            except Exception as e:
+                pass
         return result
     
     async def update_status_booking(self, booking_id:int, new_status:str) -> BookingDTO:

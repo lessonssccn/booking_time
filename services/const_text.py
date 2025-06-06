@@ -9,6 +9,9 @@ SUCCESS_CONFIRM_BOOKING_MSG = "🟢 Бронирование одобренно\
 SUCCESS_CONFIRM_BOOKING_MSG_FOR_USER = "🟢 Ваша бронь подтверждена\n🗓️ {date}"
 SUCCESS_REJECT_BOOKING_MSG = "🔴 Бронирование отклонено\n🗓️ {date}\n👤 {name} @{username}"
 SUCCESS_REJECT_BOOKING_MSG_FOR_USER = "🔴 Администратор не подтвердил вашу бронь\n🗓️ {date}\nВозможно вам подойдет другой день"
+SUCCESS_WATCH_BOOKING_MSG = "✅ Пользователь начал отслеживать слот\n🗓️ {date}\n👤 {name} @{username}"
+SUCCESS_UNWATCH_BOOKING_MSG = "✅ Пользователь перестал отслеживать слот\n🗓️ {date}\n👤 {name} @{username}"
+WATCH_BOOKING_FREE_MSG = "✅ Время для записи свободно\n🟢 Можете записаться, подтвердите запись\n🗓️ {date}"
 
 SUCCESS_TIMESLOT_CREATED = "✅ Слот успешно создан\n🗓️ Дата: {date}\n🕒 Время: {time}"
 SUCCESS_TIMESLOT_REMOVED = "✅ Слот успешно ❌ удален\n🗓️ Дата: {date}\n🕒 Время: {time}"
@@ -21,3 +24,6 @@ COPY_SCHEDULE_RESULT = "Копирование расписания заверш
 
 SUCCESS_DAY_LOCKED = "✅ День успешно 🔒 заблокирован\n🗓️ Дата: {date}\n"
 SUCCESS_DAY_UNLOCKED = "✅ День успешно 🔓 разблокирован\n🗓️ Дата: {date}\n"
+
+LIST_USER_HOW_GET_MSG_FREE_SLOT = "Пользоватлеи получивышие уведомления, об осовобождении слота\n{list_user}"
+SHORT_USER_INFO = "{name} @{username}"

@@ -20,6 +20,10 @@ class ErrorCode(Enum):
     ERROR_DAO = 16
     ERROR_ADMIN_MATCH_BOOKING = 17
     ERROR_ADMIN_UPDATE_BOOKING = 18
+    TIMESLOT_FREE = 19
+    TIMESLOT_WATCHING_CURRENT_USER = 20
+    ERROR_ADMIN_CANCEL_WATCHING = 21
+    ERROR_CANCEL_BOOKING = 22
 
 
 
@@ -39,8 +43,12 @@ error_code_to_user_msg = {
     ErrorCode.TIMESLOT_EXIST: "❌ Слот с таким временем и дайто уже существует",
     ErrorCode.ERROR_CREATE_TIMESLOT: "❌ Не удалось создать тайм слот",
     ErrorCode.INCORRECT_PARAM:"❌ Переданны не верные параметры",
-    ErrorCode.ERROR_ADMIN_MATCH_BOOKING: "❌ невозможно подтвердить статус бронирования, бронь отменена клиентом или ее не существует",
+    ErrorCode.ERROR_ADMIN_MATCH_BOOKING: "❌ невозможно изменить статус бронирования, бронь отменена клиентом или это отслеживание или ее не существует",
     ErrorCode.ERROR_ADMIN_UPDATE_BOOKING: "❌ неудальс обновить статус брони",
+    ErrorCode.TIMESLOT_FREE: "❌ Это слот не занят, вы можете его забронировать",
+    ErrorCode.TIMESLOT_WATCHING_CURRENT_USER: "❌ Вы уже отслеживаете данный слот",
+    ErrorCode.ERROR_ADMIN_CANCEL_WATCHING: "❌ Администратор не может отменять отслеживания",
+    ErrorCode.ERROR_CANCEL_BOOKING: "❌ Невозможно отменит бронирование возможно бронь уже отменена",
 }
 
 class BaseError(Exception):

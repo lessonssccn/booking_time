@@ -72,8 +72,9 @@ def create_booking_kb_admin_reminder():
     ]
     return InlineKeyboardMarkup(kb)
 
-def create_btn_show_calendar(text, state:State):
-    date = datetime.datetime.now()
+def create_btn_show_calendar(text, state:State, date:datetime.datetime=None):
+    if date is None:
+        date = datetime.datetime.now()
     return InlineKeyboardButton(text, callback_data=str(Params(state=state, year=date.year, month=date.month)))
 
 def create_btn_copy_schedule(text, state:State):
@@ -152,6 +153,7 @@ def create_btn_sys_error_booking(booking_id, show_kb=0):
 def short_admin_booking_keyboard(booking_id, show_kb=0):
     kb = [ [btn(booking_id, show_kb)] for btn in [create_btn_confirm_booking, create_btn_reject_booking, create_btn_delay_booking] ]
     return InlineKeyboardMarkup(kb)
+
 
 def full_admin_booking_keyboard(booking_id, is_new, show_kb=1):
     if is_new:
@@ -299,20 +301,64 @@ def create_timeslots_buttons(list_timeslot:List[TimeSlotDTO], state:State, addit
     buttons.extend(addition_btns)
     return InlineKeyboardMarkup(buttons)
 
-def create_confirm_booking_kb(date:datetime.date, timeslot_id:int):
+def user_confirm_booking_btn(timeslot_id:int):
+    return InlineKeyboardButton(CONFIRM, callback_data=str(Params(state=State.USER_BOOKING, slot_id=timeslot_id)))
+
+def user_watch_booking_btn(timeslot_id:int):
+    return InlineKeyboardButton(WATCH_DOG, callback_data=str(Params(state=State.USER_WATCH_SLOT, slot_id=timeslot_id)))
+
+def other_time_btn(date:datetime.date):
+    return InlineKeyboardButton(OTHER_TIME, callback_data=str(Params(state = State.USER_SHOW_TIMESLOTS, date = date)))
+
+def user_confirm_booking_watch_slot_btn(booking_id:int):
+    return InlineKeyboardButton(CONFIRM, callback_data=str(Params(state=State.USER_BOOKING_WATCH_SLOT, booking_id=booking_id)))
+
+def user_booking_watch_slot_keyboard(booking_id:int):
     buttons = [
-        [InlineKeyboardButton(CONFIRM, callback_data=str(Params(state=State.USER_BOOKING, slot_id=timeslot_id)))],
-        [InlineKeyboardButton(OTHER_TIME, callback_data=str(Params(state = State.USER_SHOW_TIMESLOTS, date = date)))],
-        [InlineKeyboardButton(SHOW_CALENDAR, callback_data= str(Params(state = State.USER_SHOW_CALENDAR, year=date.year, month=date.month)))],
+        [user_confirm_booking_watch_slot_btn(booking_id)],
+        [create_btn_show_calendar(SHOW_CALENDAR, State.USER_SHOW_CALENDAR)],
         [create_start_menu_btn()],
     ]
     return InlineKeyboardMarkup(buttons)   
 
+def create_confirm_booking_kb(date:datetime.date, timeslot_id:int):
+    buttons = [
+        [user_confirm_booking_btn(timeslot_id)],
+        [other_time_btn(date)],
+        [create_btn_show_calendar(SHOW_CALENDAR, State.USER_SHOW_CALENDAR, date)],
+        [create_start_menu_btn()],
+    ]
+    return InlineKeyboardMarkup(buttons)   
+
+def create_watch_booking_kb(date:datetime.date, timeslot_id:int):
+    buttons = [
+        [user_watch_booking_btn(timeslot_id)],
+        [other_time_btn(date)],
+        [create_btn_show_calendar(SHOW_CALENDAR, State.USER_SHOW_CALENDAR, date)],
+        [create_start_menu_btn()],
+    ]
+    return InlineKeyboardMarkup(buttons)   
+
+def create_skip_booking_kb(date:datetime.date):
+    buttons = [
+        [other_time_btn(date)],
+        [create_btn_show_calendar(SHOW_CALENDAR, State.USER_SHOW_CALENDAR, date)],
+        [create_start_menu_btn()],
+    ]
+    return InlineKeyboardMarkup(buttons)   
+
+
 def create_confirm_unbooking_kb(booking_id):
     buttons = [
         [InlineKeyboardButton(CONFIRM, callback_data=str(Params(state=State.USER_UNBOOKING, booking_id=booking_id)))],
-        # [create_book_btn()],
-        # [create_my_bookings()],
+        [create_start_menu_btn()],
+    ]
+    keyboard = InlineKeyboardMarkup(buttons)
+    return keyboard
+
+def create_confirm_unwatching_kb(booking_id):
+    buttons = [
+        [InlineKeyboardButton(CONFIRM, callback_data=str(Params(state=State.USER_UNWATCHING, booking_id=booking_id)))],
         [create_start_menu_btn()],
     ]
     keyboard = InlineKeyboardMarkup(buttons)
@@ -321,12 +367,11 @@ def create_confirm_unbooking_kb(booking_id):
 def create_unbooking_keyboard(booking_id):
     buttons = [
         [InlineKeyboardButton(CANCEL, callback_data=str(Params(state=State.USER_SHOW_CONFIRM_UNBOOKING, booking_id=booking_id)))],
-        # [create_book_btn()],
-        # [create_my_bookings()],
         [create_start_menu_btn()],
     ]
     keyboard = InlineKeyboardMarkup(buttons)
     return keyboard
+
 
 def create_confirm_keyboard(callback_data_confirm:str, callback_data_cancel:str):
     buttons = [

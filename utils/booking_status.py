@@ -1,4 +1,5 @@
 NEW = "new"
+WATCH = "watch"
 CONFIRMED = "confirmed"
 REJECTED = "rejected"
 CANCELED_USER = "canceled-user"
@@ -20,6 +21,7 @@ STATUC_ICONS = {
     COMPLETED:"✅",
     COMPLETED_UNPAID:"💳",
     SYS_ERROR:"⚠️",
+    WATCH:"👁️",
 }
 
 ACTUAL_BOOKING = "actual"
@@ -28,8 +30,8 @@ UNPAID_BOOKING = "unpaid"
 
 
 STATUS_BOOKING_TYPE = {
-    ACTUAL_BOOKING:(NEW, CONFIRMED, NOSHOW_USER, NOSHOW_PROVIDER, COMPLETED, COMPLETED_UNPAID), 
-    ALL_BOOKING:(NEW, CONFIRMED, REJECTED, CANCELED_USER, CANCELED_ADMIN, SYS_ERROR),
+    ACTUAL_BOOKING:(NEW, CONFIRMED, NOSHOW_USER, NOSHOW_PROVIDER, COMPLETED, COMPLETED_UNPAID, WATCH), 
+    ALL_BOOKING:(NEW, CONFIRMED, REJECTED, CANCELED_USER, CANCELED_ADMIN, SYS_ERROR, NOSHOW_USER, NOSHOW_PROVIDER, COMPLETED, COMPLETED_UNPAID, WATCH),
     UNPAID_BOOKING:(COMPLETED_UNPAID,)
 }
 
@@ -53,10 +55,10 @@ def get_actual_status():
     return (NEW, CONFIRMED,)
 
 def get_active_user_status():
-    return (NEW, CONFIRMED, NOSHOW_PROVIDER, NOSHOW_USER, COMPLETED, COMPLETED_UNPAID)
+    return (NEW, CONFIRMED, NOSHOW_PROVIDER, NOSHOW_USER, COMPLETED, COMPLETED_UNPAID, WATCH)
 
 def get_list_status_by_type(type_booking:str):
-    return STATUS_BOOKING_TYPE.get(type_booking, (CONFIRMED, ))
+    return STATUS_BOOKING_TYPE.get(type_booking, (NEW, ))
 
 def get_admin_confirm_status():
     return CONFIRMED
@@ -68,4 +70,10 @@ def get_unpaid_status():
     return (COMPLETED_UNPAID, )
 
 def can_update_status(status:str):
-    return status != CANCELED_USER
+    return status != CANCELED_USER and status !=WATCH
+
+def get_watch_status():
+    return WATCH
+
+def get_new_status():
+    return NEW

@@ -10,12 +10,17 @@ from errors.errors import BaseError, UNKNOWN_ERROR_MSG, UNKNOWN_ERROR_NOTIFICATI
 from tg.callback_params import extract_callback_data, Params
 from utils.booking_status import get_status_booking_icon
 from tg.states.states import State
+from utils.booking_status import get_watch_status
 
 USER_ACTIONS = {
     State.USER_SHOW_CALENDAR: "show_calendar",
     State.USER_SHOW_TIMESLOTS: "show_time_slots",
     State.USER_SHOW_CONFIRM_BOOKING: "show_confirm_booking",
     State.USER_SHOW_CONFIRM_UNBOOKING: "show_confirm_unbooking",
+
+    State.USER_WATCH_SLOT: "watching",
+    State.USER_BOOKING_WATCH_SLOT:"booking_watching_slot",
+    State.USER_UNWATCHING:"unwatching",
 
     State.USER_BOOKING: "booking",
     State.USER_UNBOOKING: "unbooking",
@@ -85,10 +90,39 @@ async def show_time_slots(update: Update, context: ContextTypes.DEFAULT_TYPE, pa
 async def show_confirm_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     timeslot_service = await ServiceFactory.get_timeslot_service(context.bot.id)
     slot = await timeslot_service.get_timeslot_by_id(params.slot_id)
+
+    booking_service = await ServiceFactory.get_booking_service(context.bot.id)
+
+    if await booking_service.exsist_actual_booking_by_slot_id_for_tg_id(params.slot_id, update.effective_user.id):
+        msg = OCCUPIED_SLOT_CURRENT_USER
+        kb = create_skip_booking_kb(slot.date)
+    elif await booking_service.exsist_watching_booking_by_slot_id_for_tg_id(params.slot_id, update.effective_user.id):
+        msg = WATCHING_SLOT_CURRENT_USER
+        kb = create_skip_booking_kb(slot.date)
+    elif await booking_service.exsist_actual_booking_by_slot_id(params.slot_id):
+        msg = OCCUPIED_SLOT
+        kb = create_watch_booking_kb(slot.date, slot.id)
+    else:
+        msg = CONFIRM_BOOKING_SLOT
+        kb = create_confirm_booking_kb(slot.date, slot.id)
+        
+    await update.callback_query.edit_message_text(get_msg_for_slot(slot, msg),reply_markup=kb)
+
+async def watching(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    booking_service = await ServiceFactory.get_booking_service(context.bot.id)
+    tg_user = update.callback_query.from_user
+    booking = await booking_service.watching(params.slot_id, tg_user.id)
     await update.callback_query.edit_message_text(
-        get_msg_for_slot(slot, CONFIRM_BOOKING_SLOT),
-        reply_markup=create_confirm_booking_kb(slot.date, slot.id)
-    )
+        get_msg_for_booking(booking, SUCCESS_WATCHING),
+        reply_markup=create_unbooking_keyboard(booking.id))
+
+async def booking_watching_slot(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    booking_service = await ServiceFactory.get_booking_service(context.bot.id)
+    tg_user = update.callback_query.from_user
+    booking = await booking_service.booking_watching_slot(params.booking_id, tg_user.id)
+    await update.callback_query.edit_message_text(
+        get_msg_for_booking(booking, SUCCESS_BOOKING),
+        reply_markup=create_unbooking_keyboard(booking.id))
 
 async def booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     booking_service = await ServiceFactory.get_booking_service(context.bot.id)
@@ -119,10 +153,17 @@ async def show_confirm_unbooking(update: Update, context: ContextTypes.DEFAULT_T
     booking_service = await ServiceFactory.get_booking_service(context.bot.id)
     tg_id = update.callback_query.from_user.id
     booking = await booking_service.get_booking(params.booking_id, tg_id)
-    await update.callback_query.edit_message_text(
-        get_msg_for_booking(booking, CONFIRM_UNBOOKING),
-        reply_markup=create_confirm_unbooking_kb(booking.id)
-    )
+
+    if booking.status != get_watch_status():
+        await update.callback_query.edit_message_text(
+            get_msg_for_booking(booking, CONFIRM_UNBOOKING),
+            reply_markup=create_confirm_unbooking_kb(booking.id)
+        )
+    else:
+        await update.callback_query.edit_message_text(
+            get_msg_for_booking(booking, CONFIRM_UNWATCHING),
+            reply_markup=create_confirm_unwatching_kb(booking.id)
+        )
 
 async def unbooking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     booking_service = await ServiceFactory.get_booking_service(context.bot.id)
@@ -130,6 +171,14 @@ async def unbooking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:P
     deleted_booking = await booking_service.cancel_booking(params.booking_id, tg_id, False)
     await update.callback_query.edit_message_text(get_msg_for_booking(deleted_booking, SUCCESS_UNBOOKING),
                                                    reply_markup=create_start_keyboard(tg_id))
+    
+async def unwatching(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    booking_service = await ServiceFactory.get_booking_service(context.bot.id)
+    tg_id = update.callback_query.from_user.id
+    deleted_booking = await booking_service.cancel_watching(params.booking_id, tg_id)
+    await update.callback_query.edit_message_text(get_msg_for_booking(deleted_booking, SUCCESS_UNWATCHING),
+                                                   reply_markup=create_start_keyboard(tg_id))
+
 
 async def show_settings(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     await update.callback_query.edit_message_text(SHOW_SETTINGS_MSG, reply_markup=create_settings_kb())
