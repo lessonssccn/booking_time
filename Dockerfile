@@ -18,11 +18,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Копируем остальные файлы проекта
 COPY . .
 
-# Права на БД
-RUN touch booking.db && \
-    chmod 666 booking.db
-RUN touch jobs.sqlite && \
-    chmod 666 jobs.sqlite
-
 # Команда запуска
-CMD ["python", "main.py"]
+# CMD ["python", "main.py"]
+RUN chmod +x ./run.sh
+CMD ["./run.sh"]

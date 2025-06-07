@@ -14,3 +14,4 @@ Dockerfile
 *.db-shm
 .env
 bot.service-tmpl
+*.db
