@@ -1,5 +1,5 @@
-#!/bin/sh
+#!/bin/bash
 # Применяем миграции
 alembic upgrade head
 # Запускаем приложение
-python main.py
+exec python main.py
