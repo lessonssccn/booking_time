@@ -5,13 +5,14 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from alembic import context
 # Импортируйте ваши модели SQLAlchemy
 from database.models import Base
+from settings.settings import settings
 # Настройка Alembic
 config = context.config
 
 # Подключение к базе данных
 def get_async_engine():
-    url = config.get_main_option("sqlalchemy.url")
-    return create_async_engine(url)
+    connection_string = settings.connection_string
+    return create_async_engine(connection_string)
 
 # Асинхронная функция для применения миграций
 async def run_migrations_online():

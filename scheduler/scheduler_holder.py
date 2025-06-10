@@ -1,12 +1,14 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 import asyncio
+from settings.settings import settings
+
 
 class SchedulerHolder:
     _scheduler_instance: AsyncIOScheduler | None = None
     _ref_count = 0
     _lock = asyncio.Lock()
-    _url:str = "sqlite:///jobs.sqlite"
+    _url:str = settings.url_jobs
     
     @classmethod
     async def get_scheduler_async(cls) -> AsyncIOScheduler:

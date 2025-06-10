@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     telegram_channel_id:int
     admin_id:int
     connection_string:str
+    url_jobs:str
     bot_locale:str
     add_slot_start_time:datetime.time
     open_windows:int
