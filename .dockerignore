@@ -16,3 +16,4 @@ Dockerfile
 .env
 bot.service-tmpl
 *.db
+*.log
