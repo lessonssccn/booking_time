@@ -14,7 +14,7 @@ Dockerfile
 *.db-shm
 *.service
 .env
-bot.service-tmpl
+*.service-tmpl
 *.db
 *.log
 update.sh

@@ -1,0 +1,14 @@
+[Unit]
+Description={{name}} Service
+After=network.target
+
+[Service]
+User={{user}}
+WorkingDirectory={{path}}
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{path}}/env/bin"
+ExecStart={{path}}/env/bin/python {{path}}/main.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
