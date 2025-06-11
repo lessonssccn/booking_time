@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     notification_create_new_user:bool
     daily_reminder_admin_check_status_booking:bool
     admin_select_other_day_booking_day_before:int
+
+    bot_update_active:bool
+    bot_update_command:str
+    bot_update_password:str
+    bot_update_script:str
+    bot_update_log:str
     
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 

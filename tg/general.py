@@ -7,6 +7,7 @@ from reminder.daily_reminder import restart_reminder
 from tg.bot_holder import BotAppHolder
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 from tg.handlers import start, button_handler
+from tg.tg_func_service import update_command
 import asyncio
 import signal
 
@@ -38,6 +39,10 @@ async def run_bot(token:str, stop_event:asyncio.Event):
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", start))
     application.add_handler(CallbackQueryHandler(button_handler))
+    
+    if settings.bot_update_active:
+        application.add_handler(CommandHandler(settings.bot_update_command, update_command))
+    
 
     await application.initialize()
     await on_startup(application)
