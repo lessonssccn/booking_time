@@ -38,7 +38,7 @@ if [ "$LOCAL" != "$REMOTE" ]; then
     exit 1
   fi
 else
-  echo "Обновлений нет."
+  echo "Обновлений нет"
   exit 0
 fi
 
