@@ -25,4 +25,4 @@ alembic upgrade head
 
 # Запускаем приложение
 echo "[INFO] Запускаю приложение..."
-exec python main.py
+exec python -u main.py

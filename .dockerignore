@@ -12,6 +12,7 @@ Dockerfile
 *.sqlite3
 *.db-wal
 *.db-shm
+*.service
 .env
 bot.service-tmpl
 *.db
