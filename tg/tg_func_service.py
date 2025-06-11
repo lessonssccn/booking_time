@@ -4,6 +4,10 @@ import subprocess
 from utils.utils import is_admin
 from settings.settings import settings
 
+async def who_am_i_command(update:Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    await update.message.reply_text(user_id)
+
 async def update_command(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     if not is_admin(user_id):
