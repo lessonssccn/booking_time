@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     bot_update_script:str
     bot_update_log:str
     
+    bot_who_am_i_active:bool
+    bot_who_am_i_command:str
+
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 
 settings = Settings()

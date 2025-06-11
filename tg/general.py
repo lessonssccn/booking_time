@@ -5,7 +5,7 @@ from tg.constants import BOT_START_NOTIFICATION, BOT_STOP_NOTIFICATION
 from scheduler.scheduler_holder import SchedulerHolder
 from reminder.daily_reminder import restart_reminder
 from tg.bot_holder import BotAppHolder
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 from tg.handlers import start, button_handler
 from tg.tg_func_service import update_command, who_am_i_command
 import asyncio
@@ -38,8 +38,12 @@ async def run_bot(token:str, stop_event:asyncio.Event):
     application = Application.builder().token(token).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", start))
-    application.add_handler(CommandHandler("whoami",who_am_i_command))
     application.add_handler(CallbackQueryHandler(button_handler))
+    
+    if settings.bot_who_am_i_active:
+        application.add_handler(CommandHandler(settings.bot_who_am_i_command, who_am_i_command))
+        application.add_handler(MessageHandler(filters.TEXT & filters.ChatType.CHANNEL, who_am_i_command))
+    
     
     if settings.bot_update_active:
         application.add_handler(CommandHandler(settings.bot_update_command, update_command))

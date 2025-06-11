@@ -5,8 +5,15 @@ from utils.utils import is_admin
 from settings.settings import settings
 
 async def who_am_i_command(update:Update, context: CallbackContext):
-    user_id = update.effective_user.id
-    await update.message.reply_text(user_id)
+    try:
+        if update.effective_chat and update.effective_chat.type!="private":
+            chat_id = update.effective_chat.id
+            await context.bot.send_message(chat_id, chat_id)
+        else:
+            user_id = update.effective_user.id
+            await update.message.reply_text(user_id)
+    except:
+        print("Error finde id")
 
 async def update_command(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
