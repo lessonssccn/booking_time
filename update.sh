@@ -39,6 +39,7 @@ if [ "$LOCAL" != "$REMOTE" ]; then
   fi
 else
   echo "Обновлений нет."
+  exit 0
 fi
 
 # Активируем виртуальное окружение
