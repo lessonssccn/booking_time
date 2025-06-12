@@ -84,6 +84,7 @@ class State(Enum):
     ADMIN_SET_BOOKING_STATUS_COMPLETED_UNPAID = -43
     ADMIN_PREV_DAY_BOOKING = -44
     ADMIN_UNPAID_BOOKING = -45
+    ADMIN_SET_BOOKING_STATUS_NETWORK_ERROR = -46
 
     def is_admin_state(self)->bool:
         return self.value<0
