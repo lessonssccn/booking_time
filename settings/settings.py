@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     backup_command_active:bool
     backup_command:str
 
+    backup_cron_active:bool
+    backup_cron_time:datetime.time
+
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 
 settings = Settings()

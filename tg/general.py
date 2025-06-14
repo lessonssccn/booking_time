@@ -8,6 +8,7 @@ from tg.bot_holder import BotAppHolder
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 from tg.handlers import start, button_handler
 from tg.tg_func_service import update_command, who_am_i_command, backup_handler
+from jobs.jobs import restart_shared_jobs
 import asyncio
 import signal
 
@@ -26,12 +27,18 @@ async def run_bots(token_list:List[str])->None:
         stop_event = asyncio.Event()
         list_task.append(asyncio.create_task(run_bot(token, stop_event)))
         list_stop_event.append(stop_event)
+
+   
         
     loop = asyncio.get_event_loop()
     loop.add_signal_handler(signal.SIGINT, lambda : signal_handler(list_stop_event))
     loop.add_signal_handler(signal.SIGTERM, lambda : signal_handler(list_stop_event))
 
+    await SchedulerHolder.init_scheduler()
+    await restart_shared_jobs(await SchedulerHolder.get_scheduler_async())
+
     await asyncio.gather(*list_task)
+    await SchedulerHolder.stop_scheduler()
 
 
 async def run_bot(token:str, stop_event:asyncio.Event):
