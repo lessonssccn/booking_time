@@ -273,9 +273,10 @@ def create_calendar_range_buttons(year:int, month:int, next_state:State, nav_sta
     if month is None:
         month = new.month
 
-    if first_date and (year==None or month==None):
-        year = first_date.year
-        month = first_date.month
+    if first_date:
+        if year is None or month is None or datetime.date(year=first_date.year, month=first_date.month, day=1) > datetime.date(year=year, month=month, day=1):
+            year = first_date.year
+            month = first_date.month
         
     return cal.create_calendar_buttons(year, month)
 
