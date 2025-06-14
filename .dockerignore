@@ -18,3 +18,4 @@ Dockerfile
 *.db
 *.log
 update.sh
+.env.example
