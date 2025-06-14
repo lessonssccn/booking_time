@@ -11,8 +11,8 @@ class Settings(BaseSettings):
     bot_locale:str
     add_slot_start_time:datetime.time
     open_windows:int
-    day_before:int
-    day_after:int
+    copy_frame_day_before:int
+    copy_frame_day_after:int
     daily_reminder_time:datetime.time
     day_after_last_active:int
     day_before_future_booking:int
@@ -29,6 +29,15 @@ class Settings(BaseSettings):
     
     bot_who_am_i_active:bool
     bot_who_am_i_command:str
+
+    history_frame_size_before:int
+    history_frame_size_after:int
+
+    page_size:int
+
+    actual_booking_frame_size_after:int
+
+
 
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 

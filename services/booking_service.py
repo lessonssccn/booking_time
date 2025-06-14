@@ -25,8 +25,8 @@ class BookingService:
         self.day_repo = day_repo
         self.reminder = reminder
         self.notification = notification
-        self.page_size = 10
-        self.days = 30
+        self.page_size = settings.page_size
+        self.days = settings.actual_booking_frame_size_after
 
 
     async def get_booking_by_id(self, booking_id:int) -> BookingDTO:
@@ -36,6 +36,12 @@ class BookingService:
         user = await self.user_repo.get_user_by_tg_id(tg_id)
         return await self.booking_repo.get_booking(booking_id, user.id)
     
+    async def get_list_booking_by_user_and_date_range(self, user_id:int, start:datetime.date, end:datetime.date, booking_type:str, page:int) -> BookingPage:
+        list_status = get_list_status_by_type(booking_type)
+        limit, offset = get_limit_and_offset(self.page_size, page if page is not None else 0)
+        list_booking =  await self.booking_repo.get_list_booking_for_user_by_date_range(user_id, list_status, start, end, limit, offset)
+        return BookingPage(items=list_booking.list_items, total=list_booking.total_count, page=page, total_page=math.ceil(list_booking.total_count/self.page_size))
+
     async def get_list_booking_by_date(self, date:datetime.date, booking_type:str, page:int) -> BookingPage:
         list_status = get_list_status_by_type(booking_type)
         limit, offset = get_limit_and_offset(self.page_size, page)

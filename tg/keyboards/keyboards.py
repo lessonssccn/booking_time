@@ -8,6 +8,7 @@ from utils.booking_status import get_status_booking_icon, get_disable_status, AC
 from dto.timeslot_models import ActualTimeslots
 from dto.models import TimeSlotDTO, UserDTO
 from dto.booking_models import BookingPage
+from dto.user_models import UserPage
 from typing import List
 from tg.keyboards.kb_text import *
 from tg.states.states import State
@@ -55,8 +56,11 @@ def create_bookings_list(state:State, text:str, booking_type:str=ACTUAL_BOOKING,
 def create_my_bookings(text:str|None = None, booking_type:str=ACTUAL_BOOKING, page:int=0):
     return create_list_booking_btn(State.USER_SHOW_LIST_MY_BOOKING, MY_BOOKING if text is None else text, booking_type, page)
 
-def create_list_booking_btn(state:State, text:str, booking_type:str, page:int=0, date:datetime.date = None):
-    params = Params(state=state, booking_type = booking_type, page=page, date=date)
+def create_list_booking_btn(state:State, text:str, booking_type:str, page:int=0, date:datetime.date = None, nav_state_callback=None):
+    if nav_state_callback == None:
+        params = Params(state=state, booking_type = booking_type, page=page, date=date)
+    else:
+        params = nav_state_callback(page)
     return InlineKeyboardButton(text, callback_data=str(params))
 
 def get_user_start_buttons():
@@ -80,6 +84,9 @@ def create_btn_show_calendar(text, state:State, date:datetime.datetime=None):
 def create_btn_copy_schedule(text, state:State):
     return InlineKeyboardButton(text, callback_data=str(Params(state=state)))
 
+def create_btn_show_list_user(state:State, text:str, page:int=0):
+    return InlineKeyboardButton(text, callback_data=str(Params(state=state, page=page)))
+
 def get_admin_start_buttons():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton(SLOT_ACTIONS, callback_data=str(State.IGNORE))],
@@ -98,14 +105,16 @@ def get_admin_start_buttons():
          create_bookings_list(State.ADMIN_NEXT_DAY_BOOKING, BOOKING_NEXT_DATE),
          create_bookings_list(State.ADMIN_PREV_DAY_BOOKING, BOOKING_PREV_DATE),],
         [create_bookings_list(State.ADMIN_UNPAID_BOOKING, BOOKING_UNPAID_ALL),
-         create_btn_show_calendar(BOOOKING_OTHER_DATE, State.ADMIN_SELECT_OTHER_DAY_BOOKING),
-         create_bookings_list(State.ADMIN_ALL_LIST_BOOKING, BOOOKING_ALL_DATE)],
+         create_btn_show_calendar(BOOKING_OTHER_DATE, State.ADMIN_SELECT_OTHER_DAY_BOOKING),
+         create_bookings_list(State.ADMIN_ALL_LIST_BOOKING, BOOKING_ALL_DATE)],
+        [create_btn_show_list_user(State.ADMIN_SELECT_USER_LIST_BOOKING, BOOKING_BY_USER)],
 
         [InlineKeyboardButton(USER_ACTION, callback_data=str(State.IGNORE))],
         [create_book_btn()],
         [create_my_bookings()], 
         [create_settings_btn()],
     ])
+
 
 def create_start_keyboard(user_id):
     if is_admin(user_id):
@@ -163,7 +172,29 @@ def full_admin_booking_keyboard(booking_id, is_new, show_kb=1):
 def create_empty_btn():
     return InlineKeyboardButton(EMPTY_BTN, callback_data=str(State.IGNORE))
 
-def create_booking_list_buttons(bookings:BookingPage, booking_type:str=ACTUAL_BOOKING, next_state:State = State.USER_BOOKING_DETAILS, nav_state:State = State.USER_SHOW_LIST_MY_BOOKING, create_back_btn = create_book_btn, ignore_status:bool=False, date:datetime.date=None, type_switcher=True):
+def create_user_btn(user:UserDTO, next_state:State):
+    text = USER_BTN_TEXT.format(first_name = user.first_name, username = user.username)
+    return InlineKeyboardButton(text, callback_data=str(Params(state=next_state, user_id=user.id)))
+
+def create_user_list_buttons(users:UserPage, next_state:State, prev_state:State, nav_state:State):
+    page = users.page
+    prev_page, next_page = calc_prev_next_page(page, users.total_page)
+
+    list_btn = [[create_user_btn(user, next_state)] for user in users.items]
+
+    if prev_page!=None or next_page!=None:
+        list_btn.append([
+            create_btn_show_list_user(nav_state, PREV_BTN, prev_page) if prev_page!=None else create_empty_btn(),
+            InlineKeyboardButton(f"{page+1}", callback_data=str(State.IGNORE)),
+            create_btn_show_list_user(nav_state, NEXT_BTN, next_page) if next_page!=None else create_empty_btn(),
+            ])
+    
+    list_btn.append([create_back_btn(prev_state)])
+
+    return InlineKeyboardMarkup(list_btn)
+
+
+def create_booking_list_buttons(bookings:BookingPage, booking_type:str=ACTUAL_BOOKING, next_state:State = State.USER_BOOKING_DETAILS, nav_state:State = State.USER_SHOW_LIST_MY_BOOKING, create_back_btn = create_book_btn, ignore_status:bool=False, date:datetime.date=None, type_switcher=True, nav_state_callbak=None):
     page = bookings.page
     prev_page, next_page = calc_prev_next_page(page, bookings.total_page)
     
@@ -171,18 +202,18 @@ def create_booking_list_buttons(bookings:BookingPage, booking_type:str=ACTUAL_BO
 
     if prev_page!=None or next_page!=None:
         list_btn.append([
-            create_list_booking_btn(nav_state, PREV_BTN, booking_type,  prev_page, date) if prev_page!=None else create_empty_btn(),
+            create_list_booking_btn(nav_state, PREV_BTN, booking_type,  prev_page, date, nav_state_callback=nav_state_callbak) if prev_page!=None else create_empty_btn(),
             InlineKeyboardButton(f"{page+1}", callback_data=str(State.IGNORE)),
-            create_list_booking_btn(nav_state, NEXT_BTN, booking_type,  next_page, date) if next_page!=None else create_empty_btn(),
+            create_list_booking_btn(nav_state, NEXT_BTN, booking_type,  next_page, date, nav_state_callback=nav_state_callbak) if next_page!=None else create_empty_btn(),
             ])
     
     
     if type_switcher and booking_type is not None:
-        btn_switch_type = create_list_booking_btn(nav_state, SHOW_ALL, ALL_BOOKING, 0, date) if booking_type == ACTUAL_BOOKING else create_list_booking_btn(nav_state, SHOW_ACTUAL, ACTUAL_BOOKING, 0, date)
-        btn_refresh = create_list_booking_btn(nav_state, REFRESH_BTN, booking_type, 0, date)
+        btn_switch_type = create_list_booking_btn(nav_state, SHOW_ALL, ALL_BOOKING, 0, date, nav_state_callback=nav_state_callbak) if booking_type == ACTUAL_BOOKING else create_list_booking_btn(nav_state, SHOW_ACTUAL, ACTUAL_BOOKING, 0, date, nav_state_callback=nav_state_callbak)
+        btn_refresh = create_list_booking_btn(nav_state, REFRESH_BTN, booking_type, 0, date, nav_state_callback=nav_state_callbak)
         list_btn.append([btn_refresh, btn_switch_type])
     else:
-        btn_refresh = create_list_booking_btn(nav_state, REFRESH_BTN, booking_type, 0, date)
+        btn_refresh = create_list_booking_btn(nav_state, REFRESH_BTN, booking_type, 0, date, nav_state_callback=nav_state_callbak)
         list_btn.append([btn_refresh])
 
     list_btn.append([create_start_menu_btn()])
@@ -217,26 +248,23 @@ def create_calendar_buttons(actual_slots:ActualTimeslots, year:int=None, month:i
 
     return cal.create_calendar_buttons(year, month)
 
-def create_calendar_range_buttons(year:int, month:int, next_state:State, nav_state:State, set_date:datetime.date=None):
+def create_calendar_range_buttons(year:int, month:int, next_state:State, nav_state:State, day_before:int, day_after:int, first_date:datetime.date=None, user_id:int=None):
 
     new = datetime.datetime.now()
-    date_start = set_date if set_date else (new - datetime.timedelta(days=settings.day_before)).date()
-    date_end = (new + datetime.timedelta(days=settings.day_after)).date()
+    date_start = first_date if first_date else (new - datetime.timedelta(days=day_before)).date()
+    date_end = (new + datetime.timedelta(days=day_after)).date()
 
-    nav_callback_set_date = ""
-
-    if set_date==None:
-        callback = lambda date: f"state={next_state}&date={date}" 
+    if first_date==None:
+        callback = lambda date: str(Params(state=next_state, date=date, user_id=user_id)) 
     else:
-        callback = lambda date: f"state={next_state}&date={set_date}&date2={date}"
-        nav_callback_set_date += f"&date={set_date}"
-
+        callback = lambda date: str(Params(state=next_state, date=first_date, date2=date, user_id=user_id))
+       
     cal = Calendar(date_start, 
                    date_end, 
                    callback_data_default_prefix = callback,
-                   callback_data_next = lambda year_next, month_next : f"state={nav_state}&year={year_next}&month={month_next}" + nav_callback_set_date,
-                   callback_data_prev = lambda year_prev, month_prev : f"state={nav_state}&year={year_prev}&month={month_prev}" + nav_callback_set_date,
-                   date_attributes = make_list_date_attribute_date_range(date_start, date_end, set_date), 
+                   callback_data_next = lambda year_next, month_next : str(Params(state=nav_state, year=year_next, month=month_next, date=first_date, user_id=user_id)),
+                   callback_data_prev = lambda year_prev, month_prev : str(Params(state=nav_state, year=year_prev, month=month_prev, date=first_date, user_id=user_id)),
+                   date_attributes = make_list_date_attribute_date_range(date_start, date_end, first_date), 
                    additional_btns = [create_start_menu_btn()])
     
     if year is None:
@@ -245,9 +273,9 @@ def create_calendar_range_buttons(year:int, month:int, next_state:State, nav_sta
     if month is None:
         month = new.month
 
-    if set_date:
-        year = set_date.year
-        month = set_date.month
+    if first_date and (year==None or month==None):
+        year = first_date.year
+        month = first_date.month
         
     return cal.create_calendar_buttons(year, month)
 

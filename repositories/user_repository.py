@@ -5,11 +5,19 @@ from database.models import User
 from database.base import get_session, get_session_with_commit
 from errors.errors import *
 from typing import List
+from dto.user_models import UserList
 
 class UserRepository:
     def __init__(self):
         self.user_dao = UserDao()
     
+    async def get_user_by_id(self, user_id:int)->UserDTO:
+        async with get_session() as session:
+            user = await self.user_dao.find_one(session, User.id == user_id)
+            if not user:
+                raise BookingError(error_code=ErrorCode.USER_NOT_FOUND, user_id = user_id)
+            return UserDTO.model_validate(user)
+
     async def get_user_by_tg_id(self, tg_id:int)->UserDTO:
         async with get_session() as session:
             user = await self.user_dao.find_one(session, User.tg_id == tg_id)
@@ -48,3 +56,9 @@ class UserRepository:
             user = await self.user_dao.find_one(session, User.id == user_id)
 
             return UserDTO.model_validate(user)
+        
+    async def get_list_user(self, limit:int, offset:int)->UserList:
+        async with get_session() as session:
+            list_user = await self.user_dao.find_all(session, filters=None, limit=limit, offset=offset, order=User.created_at.desc())
+            total = await self.user_dao.count(session=session, filters=None)
+            return UserList(list_items=list_user, total_count=total)

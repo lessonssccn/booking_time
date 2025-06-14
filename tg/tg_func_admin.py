@@ -65,6 +65,11 @@ ADMIN_ACTIONS_FUNC = {
     State.ADMIN_OTHER_DAY_BOOKING:"show_list_booking",
 
     State.ADMIN_MAIN_MENU: "show_admin_main_menu",
+
+    State.ADMIN_SELECT_USER_LIST_BOOKING: "show_list_user",
+    State.ADMIN_SELECT_FIRST_DAY_LIST_BOOKING: "select_range_day",
+    State.ADMIN_SELECT_LAST_DAY_LIST_BOOKING: "select_range_day",
+    State.ADMIN_SHOW_LIST_BOOKING:"show_list_booking",
 }
 
 
@@ -84,6 +89,9 @@ ADMIN_ACTIONS_NEXT_ACTION = {
 
     State.ADMIN_COPY_SCHEDULE_SELECT_DAY_ON_SRC_WEEK: State.ADMIN_COPY_SCHEDULE_SELECT_DAY_ON_DES_WEEK,
     State.ADMIN_COPY_SCHEDULE_SELECT_DAY_ON_DES_WEEK: State.ADMIN_COPY_SCHEDULE_SHOW_CONFIRM_MSG,
+    State.ADMIN_SELECT_USER_LIST_BOOKING: State.ADMIN_SELECT_FIRST_DAY_LIST_BOOKING,
+    State.ADMIN_SELECT_FIRST_DAY_LIST_BOOKING:State.ADMIN_SELECT_LAST_DAY_LIST_BOOKING,
+    State.ADMIN_SELECT_LAST_DAY_LIST_BOOKING:State.ADMIN_SHOW_LIST_BOOKING,
 }
 
 ADMIN_ACTIONS_PREV_ACTION = {
@@ -91,6 +99,7 @@ ADMIN_ACTIONS_PREV_ACTION = {
     State.ADMIN_REMOVE_TIMESLOT_SELECT_SLOT : State.ADMIN_REMOVE_TIMESLOT_SELECT_DATE,
     State.ADMIN_LOCK_TIMESLOT_SELECT_SLOT : State.ADMIN_LOCK_TIMESLOT_SELECT_DATE,
     State.ADMIN_HIDE_TIMESLOT_SELECT_SLOT : State.ADMIN_HIDE_TIMESLOT_SELECT_DATE,
+    State.ADMIN_SELECT_USER_LIST_BOOKING: State.ADMIN_MAIN_MENU
 }
 
 ADMIN_ACTIONS_MSG = {
@@ -131,7 +140,12 @@ ADMIN_ACTIONS_MSG = {
     State.ADMIN_SET_BOOKING_STATUS_COMPLETED_UNPAID: BOOKING_STATUS_CHANGED,
     State.ADMIN_SET_BOOKING_STATUS_SYS_ERROR: BOOKING_STATUS_CHANGED,
     State.ADMIN_SET_BOOKING_STATUS_NETWORK_ERROR: BOOKING_STATUS_CHANGED,
+    State.ADMIN_SELECT_USER_LIST_BOOKING: SELECT_USER,
+
+    State.ADMIN_SELECT_FIRST_DAY_LIST_BOOKING:SELECT_FIRST_DAY,
+    State.ADMIN_SELECT_LAST_DAY_LIST_BOOKING:SELECT_LAST_DAY,
 }
+
 STATUS_MAP = {
     State.ADMIN_SET_BOOKING_STATUS_USER_NOSHOW: NOSHOW_USER,
     State.ADMIN_SET_BOOKING_STATUS_PROVIDER_NOSHOW: NOSHOW_PROVIDER,
@@ -161,7 +175,7 @@ async def select_day(update: Update, context: ContextTypes.DEFAULT_TYPE, params:
     await show_calendar_admin(update, context, msg, next_action, params)
 
 async def select_range_day(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
-    msg = ADMIN_ACTIONS_MSG.get(params.state, ERROR_MSG)
+    msg = ADMIN_ACTIONS_MSG.get(params.state, "")
     next_action = ADMIN_ACTIONS_NEXT_ACTION[params.state]
     await show_range_calendar_admin(update, context, msg, next_action, params)
 
@@ -247,40 +261,45 @@ async def admin_set_status_booking(update: Update, context: ContextTypes.DEFAULT
     await show_admin_msg(update, context, msg, params.kb)
 #=====================================================================================================================================
 async def show_list_booking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
-    date_range = {
-                    State.ADMIN_UNPAID_BOOKING:BOOKING_UNPAID_ALL,
-                    State.ADMIN_PREV_DAY_BOOKING:BOOKING_PREV_DATE,
-                    State.ADMIN_CUR_DAY_BOOKING:BOOKING_CUR_DATE, 
-                    State.ADMIN_NEXT_DAY_BOOKING:BOOKING_NEXT_DATE, 
-                    State.ADMIN_ALL_LIST_BOOKING: BOOOKING_ALL_DATE,
-                    State.ADMIN_OTHER_DAY_BOOKING: params.date,
-                }
+    msg = BOOKING_ALL_DATE
     booking_service = await ServiceFactory.get_booking_service(context.bot.id)
-
+    nav_state_callbak = None
     if params.state == State.ADMIN_UNPAID_BOOKING:
+        msg = BOOKING_UNPAID_ALL
         bookings = await booking_service.get_list_booking_unpaid(params.page)
     elif params.state == State.ADMIN_PREV_DAY_BOOKING:
+        msg = BOOKING_PREV_DATE
         bookings = await booking_service.get_list_booking_prevday(params.booking_type, params.page)
     elif params.state == State.ADMIN_CUR_DAY_BOOKING:
+        msg = BOOKING_CUR_DATE
         bookings = await booking_service.get_list_booking_curday(params.booking_type, params.page)
     elif params.state == State.ADMIN_NEXT_DAY_BOOKING:
+        msg = BOOKING_NEXT_DATE
         bookings = await booking_service.get_list_booking_nextday(params.booking_type, params.page)
-    elif params.date:
+    elif params.state == State.ADMIN_OTHER_DAY_BOOKING:
+        msg = date_to_str(params.date)
         bookings = await booking_service.get_list_booking_by_date(params.date, params.booking_type, params.page)
+    elif params.state == State.ADMIN_SHOW_LIST_BOOKING:
+        user_service = await ServiceFactory.get_user_service(context.bot.id)
+        user = await user_service.get_user_by_id(params.user_id)
+        msg = f"\n{user.first_name} @{user.username}\n{date_to_str(params.date)} - {date_to_str(params.date2)}"
+        nav_state_callbak = lambda page: Params(state = params.state, user_id=params.user_id, date=params.date, date2=params.date2, page=page)
+        bookings = await booking_service.get_list_booking_by_user_and_date_range(params.user_id, params.date, params.date2, ACTUAL_BOOKING, page=params.page)
     else:
         bookings = await booking_service.get_all_actual_booking(params.booking_type, params.page)
         
     await update.callback_query.edit_message_text(
-        ADMIN_BOOKING_LIST.format(date = date_range.get(params.state), actual_date = datetime.datetime.now()),
+        ADMIN_BOOKING_LIST.format(date = msg, actual_date = datetime.datetime.now()),
         reply_markup = create_booking_list_buttons(
             bookings, 
-            params.booking_type, 
+            params.booking_type if params.state != State.ADMIN_SHOW_LIST_BOOKING else None, 
             next_state=State.ADMIN_BOOKING_DETAILS, 
             nav_state=params.state, 
             create_back_btn=lambda: create_back_btn(State.ADMIN_MAIN_MENU), 
             ignore_status=True,
             date=params.date,
-            type_switcher = params.state != State.ADMIN_UNPAID_BOOKING
+            type_switcher = params.state != State.ADMIN_UNPAID_BOOKING,
+            nav_state_callbak=nav_state_callbak
             ))
 
 async def show_booking_details(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
@@ -332,6 +351,14 @@ async def process_copy_schedule(update: Update, context: ContextTypes.DEFAULT_TY
 
     await show_admin_msg(update, context, msg)
 
+
+async def show_list_user(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
+    user_service = await ServiceFactory.get_user_service(context.bot.id)
+    user_page = await user_service.get_list_user(params.page)
+    msg = ADMIN_ACTIONS_MSG.get(params.state, "")
+    kb = create_user_list_buttons(user_page, ADMIN_ACTIONS_NEXT_ACTION.get(params.state), ADMIN_ACTIONS_PREV_ACTION.get(params.state), params.state)
+    await update.callback_query.edit_message_text(msg, reply_markup = kb) 
+
 #==========================================================================================================================
 async def show_admin_msg(update: Update, context: ContextTypes.DEFAULT_TYPE, msg: str, show_kb:bool=True):
     if show_kb:
@@ -351,7 +378,14 @@ async def show_calendar_admin(update: Update, context: ContextTypes.DEFAULT_TYPE
     await update.callback_query.edit_message_text(msg, reply_markup = kb) 
 
 async def show_range_calendar_admin(update: Update, context: ContextTypes.DEFAULT_TYPE, msg:str, next_state: State, params:Params):
-    kb = create_calendar_range_buttons(params.year, params.month, next_state, params.state, set_date=params.date)
+    if params.state == State.ADMIN_SELECT_FIRST_DAY_LIST_BOOKING or params.state == State.ADMIN_SELECT_LAST_DAY_LIST_BOOKING:
+        day_before = settings.history_frame_size_before
+        day_after = settings.history_frame_size_after
+    else:
+        day_before = settings.copy_frame_day_before
+        day_after = settings.copy_frame_day_after
+
+    kb = create_calendar_range_buttons(params.year, params.month, next_state, params.state, day_before=day_before, day_after=day_after, first_date=params.date, user_id = params.user_id)
     await update.callback_query.edit_message_text(msg, reply_markup = kb) 
 
 async def show_list_timeslot_admin(update: Update, context: ContextTypes.DEFAULT_TYPE, date: datetime.date, text: str, next_state: State, back_state:State):
