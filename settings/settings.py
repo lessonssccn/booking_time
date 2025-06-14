@@ -37,7 +37,8 @@ class Settings(BaseSettings):
 
     actual_booking_frame_size_after:int
 
-
+    backup_command_active:bool
+    backup_command:str
 
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 

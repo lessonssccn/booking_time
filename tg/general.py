@@ -7,7 +7,7 @@ from reminder.daily_reminder import restart_reminder
 from tg.bot_holder import BotAppHolder
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 from tg.handlers import start, button_handler
-from tg.tg_func_service import update_command, who_am_i_command
+from tg.tg_func_service import update_command, who_am_i_command, backup_handler
 import asyncio
 import signal
 
@@ -47,8 +47,11 @@ async def run_bot(token:str, stop_event:asyncio.Event):
     
     if settings.bot_update_active:
         application.add_handler(CommandHandler(settings.bot_update_command, update_command))
-    
 
+    if settings.backup_command_active:
+        application.add_handler(CommandHandler(settings.backup_command, backup_handler))
+    
+    
     await application.initialize()
     await on_startup(application)
     await application.updater.start_polling()

@@ -3,6 +3,9 @@ from telegram.ext import CallbackContext
 import subprocess
 from utils.utils import is_admin
 from settings.settings import settings
+from database.backup import backup_db, backup_jobs
+import os
+import asyncio
 
 async def who_am_i_command(update:Update, context: CallbackContext):
     try:
@@ -49,3 +52,25 @@ async def update_command(update: Update, context: CallbackContext):
         await update.message.reply_text("Обновление запущено. Бот будет перезапущен.")
     except Exception as e:
         await update.message.reply_text(f"Ошибка при запуске обновления: {e}")
+
+async def send_file_to_channel(bot, file_path):
+    try:
+        with open(file_path, 'rb') as file:
+            await bot.send_document(chat_id=settings.telegram_channel_id, document=file)
+            print(f"Файл {file_path} отправлен!")
+    except Exception as e:
+        print(f"Ошибка при отправке {file_path}: {e}")
+
+async def backup_and_send(bot):
+    backup_db_path = await backup_db()
+    await send_file_to_channel(bot, backup_db_path)
+    await asyncio.to_thread(os.remove, backup_db_path)
+    backup_jobs_path = await backup_jobs()
+    await send_file_to_channel(bot, backup_jobs_path)
+    await asyncio.to_thread(os.remove, backup_jobs_path)
+
+async def backup_handler(update: Update, context: CallbackContext):
+    try:
+        await backup_and_send(context.bot)
+    except Exception as e:
+        print(f"backup error {e}")

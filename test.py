@@ -1,6 +1,7 @@
 from services.service_factory import ServiceFactory
 from scheduler.scheduler_holder import SchedulerHolder
 from notifications.notification_func import prfix_reminder
+from database.backup import backup_db, backup_jobs
 import asyncio
 
 
@@ -15,7 +16,11 @@ async def test_prfix_reminder() -> None:
     print(prfix_reminder(60))
     print(prfix_reminder(80))
     print(prfix_reminder(15, False))
-    
+
+
+async def test_back_up() -> None:
+    print(await backup_db())
+    print(await backup_jobs())
 
 if __name__ == "__main__":
-    asyncio.run(test_prfix_reminder())
+    asyncio.run(test_back_up())
