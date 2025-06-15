@@ -60,7 +60,7 @@ def create_list_booking_btn(state:State, text:str, booking_type:str, page:int=0,
     if nav_state_callback == None:
         params = Params(state=state, booking_type = booking_type, page=page, date=date)
     else:
-        params = nav_state_callback(page)
+        params = nav_state_callback(page, booking_type)
     return InlineKeyboardButton(text, callback_data=str(params))
 
 def get_user_start_buttons():
@@ -107,7 +107,8 @@ def get_admin_start_buttons():
         [create_bookings_list(State.ADMIN_UNPAID_BOOKING, BOOKING_UNPAID_ALL),
          create_btn_show_calendar(BOOKING_OTHER_DATE, State.ADMIN_SELECT_OTHER_DAY_BOOKING),
          create_bookings_list(State.ADMIN_ALL_LIST_BOOKING, BOOKING_ALL_DATE)],
-        [create_btn_show_list_user(State.ADMIN_SELECT_USER_LIST_BOOKING, BOOKING_BY_USER)],
+        [create_btn_show_list_user(State.ADMIN_SELECT_USER_ACTUAL_BOOKING, BOOKING_BY_USER),
+         create_btn_show_list_user(State.ADMIN_SELECT_USER_LIST_BOOKING, BOOKING_HIST_BY_USER)],
 
         [InlineKeyboardButton(USER_ACTION, callback_data=str(State.IGNORE))],
         [create_book_btn()],

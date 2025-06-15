@@ -79,11 +79,16 @@ class BookingService:
 
     async def get_list_actual_booking(self, tg_id:int, booking_type:str, page:int) -> BookingPage:
         user = await self.user_repo.get_user_by_tg_id(tg_id)
+        return await self.get_list_actual_booking_by_user_id(user.id, booking_type, page)
+
+
+    async def get_list_actual_booking_by_user_id(self, user_id:int, booking_type:str, page:int) -> BookingPage:
         list_status = get_list_status_by_type(booking_type)
         limit, offset = get_limit_and_offset(self.page_size, page)
         min_date,max_date = get_actual_date_range(self.days)
-        list_booking = await self.booking_repo.get_list_booking_for_user_by_date_range(user.id, list_status, min_date, max_date, limit, offset)
+        list_booking = await self.booking_repo.get_list_booking_for_user_by_date_range(user_id, list_status, min_date, max_date, limit, offset)
         return BookingPage(items=list_booking.list_items, total=list_booking.total_count, page=page, total_page=math.ceil(list_booking.total_count/self.page_size))
+
 
     async def exsist_actual_booking_by_slot_id(self, timslot_id:int) -> bool:
         return await self.booking_repo.exsist_booking(timslot_id, get_actual_status())
