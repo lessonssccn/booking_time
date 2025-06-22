@@ -165,8 +165,10 @@ STATUS_MAP = {
 #====================================================================================================================
 async def process_admin_action(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     user_id = update.effective_user.id
-    if not is_admin(user_id):
-        await update.callback_query.edit_message_text(NOT_ADMIN, reply_markup=create_start_keyboard(user_id))
+    bot_id = context.bot.id
+    admin_service = await ServiceFactory.get_admin_service(bot_id)
+    if not await admin_service.is_admin(user_id, bot_id):
+        await update.callback_query.edit_message_text(NOT_ADMIN, reply_markup=create_start_keyboard(True))
         return
     function_name = ADMIN_ACTIONS_FUNC[params.state]
     function = globals()[function_name]

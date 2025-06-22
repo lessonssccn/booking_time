@@ -1,7 +1,6 @@
 import datetime
-from settings.settings import settings
 from typing import List
-from dto.models import UserDTO, BookingDTO, TimeSlotDTO, DayDTO
+from dto.models import UserDTO, BookingDTO, TimeSlotDTO, DayDTO, AdminDTO, ChannelDTO
 
 def get_list_date(date_start:datetime.date, date_end:datetime.date)->List[datetime.date]:
     result = []
@@ -42,15 +41,6 @@ def conver_str_to_date(date:str):
 def conver_str_to_time(time:str):
     return datetime.datetime.strptime(time, "%H:%M:%S").time()
 
-def is_admin(tg_id:int):
-    return tg_id == settings.admin_id
-
-def get_channel_id():
-    return settings.telegram_channel_id
-
-def get_admin_id():
-    return settings.admin_id
-
 def get_user_info_as_txt(user:UserDTO, tmpl:str)->str:
     date = datetime_to_str(user.created_at)
     return tmpl.format(name = user.first_name, username = user.username, tg_id = user.tg_id, user_id = user.id, date = date)
@@ -74,3 +64,16 @@ def get_msg_for_copy_slot(date_src_start:datetime.date, date_src_end:datetime.da
 def get_msg_for_day(day:DayDTO, tmpl:str):
     date = date_to_str(day.date)
     return tmpl.format(date=date)
+
+def get_msg_admin(admin:AdminDTO, tmpl:str)->str:
+    date = datetime_to_str(admin.created_at)
+    return tmpl.format(name = admin.user.first_name, 
+                       username = admin.user.username, 
+                       tg_id = admin.user.tg_id, 
+                       user_id = admin.user.id, 
+                       date = date,
+                       bot_id = admin.bot_id)
+
+def get_msg_channel(channel:ChannelDTO, tmpl:str)->str:
+    date = datetime_to_str(channel.created_at)
+    return tmpl.format(date=date, bot_id = channel.bot_id, channel_id = channel.channel_id)

@@ -4,8 +4,6 @@ from typing import List
 
 class Settings(BaseSettings):
     telegram_bot_token:List[str]
-    telegram_channel_id:int
-    admin_id:int
     connection_string:str
     url_jobs:str
     bot_locale:str
@@ -23,12 +21,8 @@ class Settings(BaseSettings):
 
     bot_update_active:bool
     bot_update_command:str
-    bot_update_password:str
     bot_update_script:str
     bot_update_log:str
-    
-    bot_who_am_i_active:bool
-    bot_who_am_i_command:str
 
     history_frame_size_before:int
     history_frame_size_after:int
@@ -42,6 +36,15 @@ class Settings(BaseSettings):
 
     backup_cron_active:bool
     backup_cron_time:datetime.time
+
+    admin_password:str
+    limit_incorrect_password:int
+    
+    add_admin_command:str
+    rm_admin_command:str
+    
+    add_channel_text:str
+    rm_channel_text:str
 
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 

@@ -67,3 +67,25 @@ class BookingDTO(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
     
+
+class AdminDTO(BaseModel):
+    id:int
+    user_id: int
+    bot_id: int
+    created_at:datetime
+    updated_at:datetime
+
+    user: UserDTO
+
+    model_config = ConfigDict(from_attributes=True)
+    
+
+
+class ChannelDTO(BaseModel):
+    id:int
+    bot_id: int
+    channel_id: int
+    created_at:datetime
+    updated_at:datetime
+
+    model_config = ConfigDict(from_attributes=True)

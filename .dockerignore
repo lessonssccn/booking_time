@@ -19,3 +19,4 @@ Dockerfile
 *.log
 update.sh
 .env.example
+Makefile

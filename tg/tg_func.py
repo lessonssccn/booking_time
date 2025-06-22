@@ -6,7 +6,7 @@ from services.service_factory import ServiceFactory
 from tg.keyboards.keyboards import *
 from utils.utils import *
 from tg.constants import *
-from errors.errors import BaseError, UNKNOWN_ERROR_MSG, UNKNOWN_ERROR_NOTIFICATION
+from errors.errors import BaseError, UNKNOWN_ERROR_MSG, UNKNOWN_ERROR_NOTIFICATION, UNKNOWN_ERROR_MSG_CHANNEL
 from tg.callback_params import extract_callback_data, Params
 from utils.booking_status import get_status_booking_icon
 from tg.states.states import State
@@ -36,14 +36,116 @@ USER_ACTIONS = {
 async def process_start_msg(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         user = update.effective_user
-        user_service = await ServiceFactory.get_user_service(context.bot.id)
+        user_id = user.id
+        bot_id = context.bot.id
+        user_service = await ServiceFactory.get_user_service(bot_id)
+        admin_service = await ServiceFactory.get_admin_service(bot_id)
+
         user = await user_service.get_or_create_user(user.id, user.username, user.first_name, user.last_name)
-        await update.message.reply_text(FIRST_MSG.format(date=datetime_to_str(datetime.datetime.now())), reply_markup=create_start_keyboard(update.effective_user.id), parse_mode=ParseMode.HTML)
+        await update.message.reply_text(FIRST_MSG.format(date=datetime_to_str(datetime.datetime.now())), reply_markup=create_start_keyboard(await admin_service.is_admin(user_id, bot_id)), parse_mode=ParseMode.HTML)
     except BaseError as e:
-        await update.message.reply_text(e.get_user_msg(), reply_markup=create_start_keyboard(update.effective_user.id))
+        await update.message.reply_text(e.get_user_msg())
     except Exception as e:
         print(e)
         await update.message.reply_text(UNKNOWN_ERROR_MSG)
+
+async def process_add_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        user_id = update.effective_user.id
+        bot_id = context.bot.id
+        total_attempt = context.bot_data.get(user_id, 0)
+        print("process_add_admin", total_attempt)
+
+        if total_attempt >=settings.limit_incorrect_password:
+            return
+
+        admin_service = await ServiceFactory.get_admin_service(bot_id)
+        
+        args = context.args
+        if not args or len(args) == 0:
+            return 
+
+        password = args[0]
+
+        if password == settings.admin_password:
+            await admin_service.add_admin(user_id, bot_id)
+            total_attempt = 0
+        else:
+            total_attempt += 1
+        
+        context.bot_data[user_id] = total_attempt
+        
+    except BaseError as e:
+        await update.message.reply_text(e.get_user_msg())
+    except Exception as e:
+        print(e)
+        await update.message.reply_text(UNKNOWN_ERROR_MSG)    
+
+async def process_remove_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        user_id = update.effective_user.id
+        bot_id = context.bot.id
+
+        total_attempt = context.bot_data.get(user_id, 0)
+        print("process_remove_admin", total_attempt)
+
+        admin_service = await ServiceFactory.get_admin_service(bot_id)
+        
+        args = context.args
+        if not args or len(args) == 0:
+            return 
+
+        password = args[0]
+
+        if password == settings.admin_password and await admin_service.is_admin(user_id, bot_id):
+            await admin_service.remove_admin(user_id, bot_id)
+            total_attempt = 0
+        else:
+            total_attempt += 1
+
+        context.bot_data[user_id] = total_attempt
+        
+    except BaseError as e:
+        await update.message.reply_text(e.get_user_msg())
+    except Exception as e:
+        print(e)
+        await update.message.reply_text(UNKNOWN_ERROR_MSG)    
+
+async def process_channel_msg(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_chat and update.effective_chat.type!="private":
+            chat_id = update.effective_chat.id
+            bot_id = context.bot.id
+
+            total_attempt = context.bot_data.get(chat_id, 0)
+            print("process_channel_msg", total_attempt)
+
+            msg = ""
+
+            if update.channel_post and update.channel_post.text:
+                msg = update.channel_post.text.strip()
+
+            try:
+                parts = msg.split(maxsplit=1)
+                if len(parts)!=2:
+                    return
+                msg, password = parts
+                if password == settings.admin_password and msg  == settings.add_channel_text:
+                    channel_service = await ServiceFactory.get_channel_service(bot_id)
+                    await channel_service.add_channel(chat_id, bot_id)
+                    total_attempt = 0
+                elif password == settings.admin_password and msg  == settings.rm_channel_text:
+                    channel_service = await ServiceFactory.get_channel_service(bot_id)
+                    await channel_service.remove_chanel(bot_id)
+                    total_attempt = 0
+                else:
+                    total_attempt += 1
+                
+                context.bot_data[chat_id] = total_attempt
+            except BaseError as e:
+                await context.bot.send_message(chat_id, e.get_notification_msg())
+            except Exception as e:
+                print(e)
+                await context.bot.send_message(chat_id, UNKNOWN_ERROR_MSG_CHANNEL)
 
 async def process_press_btn(update: Update, context: ContextTypes.DEFAULT_TYPE, data:str):
     try:
@@ -64,7 +166,7 @@ async def process_press_btn(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         await process_unknown_error(update, context, data, e)
 
 async def process_booking_error(update: Update, context: ContextTypes.DEFAULT_TYPE, callback_data:str, e:BaseError):
-    await update.callback_query.edit_message_text(f"({datetime.datetime.now()}) {e.get_user_msg()}", reply_markup=create_start_keyboard(update.effective_user.id))
+    await update.callback_query.edit_message_text(f"({datetime.datetime.now()}) {e.get_user_msg()}")
     notification_service = await ServiceFactory.get_notification_service(context.bot.id)
     await notification_service.send_notification_to_channel(e.get_notification_msg()+f"\ntg_id={update.effective_user.id}\ncallback_data={callback_data}", tg_user=update.effective_user)
 
@@ -166,25 +268,35 @@ async def show_confirm_unbooking(update: Update, context: ContextTypes.DEFAULT_T
         )
 
 async def unbooking(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
-    booking_service = await ServiceFactory.get_booking_service(context.bot.id)
+    bot_id = context.bot.id
+    booking_service = await ServiceFactory.get_booking_service(bot_id)
+    admin_service = await ServiceFactory.get_admin_service(bot_id)
+
     tg_id = update.callback_query.from_user.id
     deleted_booking = await booking_service.cancel_booking(params.booking_id, tg_id, False)
     await update.callback_query.edit_message_text(get_msg_for_booking(deleted_booking, SUCCESS_UNBOOKING),
-                                                   reply_markup=create_start_keyboard(tg_id))
+                                                   reply_markup=create_start_keyboard(await admin_service.is_admin(tg_id, bot_id)))
     
 async def unwatching(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
-    booking_service = await ServiceFactory.get_booking_service(context.bot.id)
+    bot_id = context.bot.id
+    booking_service = await ServiceFactory.get_booking_service(bot_id)
+    admin_service = await ServiceFactory.get_admin_service(bot_id)
     tg_id = update.callback_query.from_user.id
     deleted_booking = await booking_service.cancel_watching(params.booking_id, tg_id)
     await update.callback_query.edit_message_text(get_msg_for_booking(deleted_booking, SUCCESS_UNWATCHING),
-                                                   reply_markup=create_start_keyboard(tg_id))
+                                                   reply_markup=create_start_keyboard(await admin_service.is_admin(tg_id, bot_id)))
 
 
 async def show_settings(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     await update.callback_query.edit_message_text(SHOW_SETTINGS_MSG, reply_markup=create_settings_kb())
 
 async def show_start_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
-    await update.callback_query.edit_message_text(FIRST_MSG.format(date=datetime_to_str(datetime.datetime.now())), reply_markup=create_start_keyboard(update.effective_user.id), parse_mode=ParseMode.HTML)
+    tg_id = update.callback_query.from_user.id
+    bot_id = context.bot.id
+    admin_service = await ServiceFactory.get_admin_service(bot_id)
+    await update.callback_query.edit_message_text(
+        FIRST_MSG.format(date=datetime_to_str(datetime.datetime.now())), 
+        reply_markup=create_start_keyboard(await admin_service.is_admin(tg_id, bot_id)), parse_mode=ParseMode.HTML)
 
 async def show_reminde_settings(update: Update, context: ContextTypes.DEFAULT_TYPE, params:Params):
     user_service = await ServiceFactory.get_user_service(context.bot.id)

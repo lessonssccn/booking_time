@@ -2,7 +2,7 @@ import datetime
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from tg.keyboards.kb_calendar import Calendar
 from tg.keyboards.kb_time import TimeKeyboard
-from utils.utils import is_admin, datetime_to_str, time_to_str
+from utils.utils import datetime_to_str, time_to_str
 from tg.keyboards.utils import make_list_date_attribute, calc_prev_next_page, make_list_date_attribute_date_range
 from utils.booking_status import get_status_booking_icon, get_disable_status, ACTUAL_BOOKING, ALL_BOOKING
 from dto.timeslot_models import ActualTimeslots
@@ -117,8 +117,8 @@ def get_admin_start_buttons():
     ])
 
 
-def create_start_keyboard(user_id):
-    if is_admin(user_id):
+def create_start_keyboard(is_admin=False):
+    if is_admin:
         return get_admin_start_buttons()
     else:
         return get_user_start_buttons()

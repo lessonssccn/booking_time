@@ -1,42 +1,37 @@
 from telegram import Update
-from telegram.ext import CallbackContext
+from telegram.ext import ContextTypes
 import subprocess
-from utils.utils import is_admin
 from settings.settings import settings
 from database.backup import backup_db, backup_jobs
 import os
 import asyncio
+from services.service_factory import ServiceFactory
 
-async def who_am_i_command(update:Update, context: CallbackContext):
-    try:
-        if update.effective_chat and update.effective_chat.type!="private":
-            chat_id = update.effective_chat.id
-            await context.bot.send_message(chat_id, chat_id)
-        else:
-            user_id = update.effective_user.id
-            await update.message.reply_text(user_id)
-    except:
-        print("Error finde id")
-
-async def update_command(update: Update, context: CallbackContext):
+async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    if not is_admin(user_id):
-        await update.message.reply_text("Неизвестная команда")
+    bot_id = context.bot.id
+    total_attempt = context.bot_data.get(user_id, 0)
+    print("update_command", total_attempt)
+
+    admin_service = await ServiceFactory.get_admin_service(bot_id)
+    if not await admin_service.is_admin(user_id, bot_id):
         return
     
     args = context.args
 
     if not args or len(args) == 0:
-        await update.message.reply_text("Пароль не указан. Используйте: /update <пароль>")
         return
 
     password = args[0]
 
-    if password != settings.bot_update_password:
-        await update.message.reply_text("Неизвестная команда")
+    if password != settings.admin_password:
+        total_attempt +=1
+        context.bot_data[user_id] = total_attempt
         return
 
     await update.message.reply_text("Начинаю обновление...")
+    total_attempt=0
+    context.bot_data[user_id] = total_attempt
 
     script_path = settings.bot_update_script
 
@@ -69,7 +64,7 @@ async def backup_and_send(bot):
     await send_file_to_channel(bot, backup_jobs_path)
     await asyncio.to_thread(os.remove, backup_jobs_path)
 
-async def backup_handler(update: Update, context: CallbackContext):
+async def backup_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await backup_and_send(context.bot)
     except Exception as e:

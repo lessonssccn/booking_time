@@ -1,55 +1,43 @@
 from enum import Enum
 
-class ErrorCode(Enum):
-    USER_NOT_FOUND = 1
-    TIMESLOT_NOT_FOUND = 2
-    BOOKING_NOT_FOUND = 3
-    ERROR_UPDATE_STATUS_BOOKING = 3
-    ERROR_UPDATE_CAPACITY = 4
-    ERROR_INTEGRITY_CAPACITY = 5
-    TIMESLOT_OCCUPIED = 6
-    TIMESLOT_OCCUPIED_CURRENT_USER = 7
-    ERROR_CREATE_BOOKING = 8
-    TIMESLOT_EXIST = 9
-    ERROR_CREATE_TIMESLOT = 10
-    INCORRECT_PARAM = 11
-    ERROR_DELETE_TIMESLOT = 12
-    ERROR_UPDATE_TIMESLOT = 13
-    ERROR_UPDATE_DAY = 14
-    ERROR_ADD_DAY = 15
-    ERROR_DAO = 16
-    ERROR_ADMIN_MATCH_BOOKING = 17
-    ERROR_ADMIN_UPDATE_BOOKING = 18
-    TIMESLOT_FREE = 19
-    TIMESLOT_WATCHING_CURRENT_USER = 20
-    ERROR_ADMIN_CANCEL_WATCHING = 21
-    ERROR_CANCEL_BOOKING = 22
+class ErrorCode(str,Enum):
+    USER_NOT_FOUND = "❌ Юзер не найден"
+    TIMESLOT_NOT_FOUND = "❌ Время не найдено"
+    BOOKING_NOT_FOUND = "❌ Бронь не найдена"
+    ERROR_UPDATE_STATUS_BOOKING = "❌ Проблемы с обновлением статуса брони"
+    ERROR_UPDATE_CAPACITY = "❌ Проблемы с выбранным временем. Возможно его уже заняли. Попробуйте другое"
+    ERROR_INTEGRITY_CAPACITY = "❌ Проблемы с выбранным временем. Возможно его уже заняли. Попробуйте другое"
+    TIMESLOT_OCCUPIED = "❌ Время уже занято"
+    TIMESLOT_OCCUPIED_CURRENT_USER = "❌ Вы уже забронировали это время"
+    ERROR_CREATE_BOOKING = "❌ Не удалось забронировать время"
+    TIMESLOT_EXIST = "❌ Слот с таким временем и дайто уже существует"
+    ERROR_CREATE_TIMESLOT = "❌ Не удалось создать тайм слот"
+    INCORRECT_PARAM = "❌ Переданны не верные параметры"
+    ERROR_DELETE_TIMESLOT = "❌ Не удалось загрузить детали о времени"
+    ERROR_UPDATE_TIMESLOT = "❌ Не удалось обновить слот"
+    ERROR_UPDATE_DAY = "❌ Не удалось обновить день"
+    ERROR_ADD_DAY = "❌ Не удалось добаить день"
+    ERROR_DAO = "❌ Ошибка БД"
+    ERROR_ADMIN_MATCH_BOOKING = "❌ невозможно изменить статус бронирования, бронь отменена клиентом или это отслеживание или ее не существует"
+    ERROR_ADMIN_UPDATE_BOOKING = "❌ неудальс обновить статус брони"
+    TIMESLOT_FREE = "❌ Это слот не занят, вы можете его забронировать"
+    TIMESLOT_WATCHING_CURRENT_USER = "❌ Вы уже отслеживаете данный слот"
+    ERROR_ADMIN_CANCEL_WATCHING = "❌ Администратор не может отменять отслеживания"
+    ERROR_CANCEL_BOOKING = "❌ Невозможно отменит бронирование возможно бронь уже отменена"
+    ERROR_CREATE_ADMIN = "❌ Не удалось создать админа"
+    ADMIN_NOT_FOUND = "❌ Не удалось найти админа"
+    ERROR_DELETE_ADMIN = "❌ Не удалось удалить админа"
+    ERROR_CREATE_CHANNEL = "❌ Не удалось зарегестрировать канал"
+    CHANNEL_NOT_FOUND = "❌ Не удалось найти канал"
+    ERROR_DELETE_CHANNEL = "❌ Не удалось удалить канал"
+    ADMIN_ALREADY_SET = "❌ Админ уже задан для этого бота"
+    CHANNEL_ALREADY_SET = "❌ Канал уже задан для этого бота"
 
 
-
-UNKNOWN_ERROR_MSG = f"💀 Что-то пошло не так\nВыполните команду /start повторно"
+UNKNOWN_ERROR_MSG_CHANNEL = "💀 Что-то пошло не так"
+UNKNOWN_ERROR_MSG = "💀 Что-то пошло не так\nВыполните команду /start повторно"
 UNKNOWN_ERROR_NOTIFICATION = "💀 UNKNOWN_ERROR"
 
-error_code_to_user_msg = {
-    ErrorCode.USER_NOT_FOUND:"❌ Ошибка. Выполните команду /start повторно",
-    ErrorCode.TIMESLOT_NOT_FOUND:"❌ Выбирете другое время с жтим какие-то проблемы",
-    ErrorCode.BOOKING_NOT_FOUND:"❌ Бронь не найдена",
-    ErrorCode.ERROR_UPDATE_STATUS_BOOKING:"❌ Проблемы с бронью",
-    ErrorCode.ERROR_UPDATE_CAPACITY:"❌ Проблемы с выбранным временем. Попробуйте другое",
-    ErrorCode.ERROR_INTEGRITY_CAPACITY:"❌ Проблемы с выбранным временем. Попробуйте другое",
-    ErrorCode.TIMESLOT_OCCUPIED:"❌ Время уже занято",
-    ErrorCode.TIMESLOT_OCCUPIED_CURRENT_USER:"❌ Вы уже забронировали это время",
-    ErrorCode.ERROR_CREATE_BOOKING:"❌ Не удалось забронировать время",
-    ErrorCode.TIMESLOT_EXIST: "❌ Слот с таким временем и дайто уже существует",
-    ErrorCode.ERROR_CREATE_TIMESLOT: "❌ Не удалось создать тайм слот",
-    ErrorCode.INCORRECT_PARAM:"❌ Переданны не верные параметры",
-    ErrorCode.ERROR_ADMIN_MATCH_BOOKING: "❌ невозможно изменить статус бронирования, бронь отменена клиентом или это отслеживание или ее не существует",
-    ErrorCode.ERROR_ADMIN_UPDATE_BOOKING: "❌ неудальс обновить статус брони",
-    ErrorCode.TIMESLOT_FREE: "❌ Это слот не занят, вы можете его забронировать",
-    ErrorCode.TIMESLOT_WATCHING_CURRENT_USER: "❌ Вы уже отслеживаете данный слот",
-    ErrorCode.ERROR_ADMIN_CANCEL_WATCHING: "❌ Администратор не может отменять отслеживания",
-    ErrorCode.ERROR_CANCEL_BOOKING: "❌ Невозможно отменит бронирование возможно бронь уже отменена",
-}
 
 class BaseError(Exception):
     def __init__(self, error_code:ErrorCode, **kwargs):
@@ -57,7 +45,7 @@ class BaseError(Exception):
         self.error_data = dict(kwargs)
 
     def get_user_msg(self):
-        return error_code_to_user_msg.get(self.error_code, UNKNOWN_ERROR_MSG)
+        return self.error_code.value
     
     def get_notification_msg(self):
         error_text = "❌"+self.error_code.name

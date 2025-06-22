@@ -27,3 +27,9 @@ SUCCESS_DAY_UNLOCKED = "✅ День успешно 🔓 разблокиров�
 
 LIST_USER_HOW_GET_MSG_FREE_SLOT = "Пользоватлеи получивышие уведомления, об осовобождении слота\n{list_user}"
 SHORT_USER_INFO = "{name} @{username}"
+
+SUCCESS_ADD_ADMIN = "✅ Администратор успешно добалвен\n🗓️ {date}\n👤 {name} @{username}\nbot_id={bot_id}"
+SUCCESS_REMOVE_ADMIN = "❌ Администратор успешно удален\n🗓️ {date}\n👤 {name} @{username}\nbot_id={bot_id}"
+
+SUCCESS_ADD_CHANNEL = "✅ Канал успешно добалвен\n🗓️ {date}\nbot_id={bot_id}\nchannel_id={channel_id}"
+SUCCESS_REMOVE_CHANNEL = "❌ Канал успешно удален\n🗓️ {date}\nbot_id={bot_id}\nchannel_id{channel_id}"

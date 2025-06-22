@@ -17,6 +17,7 @@ class User(Base):
     reminder_minutes_before:Mapped[str] = mapped_column(default="[60,15,5]", server_default="[60,15,5]")
 
     bookings: Mapped[list["Booking"]] = relationship("Booking", back_populates="user")
+    admins: Mapped[list["Admin"]] = relationship("Admin", back_populates="user")
 
 class Day(Base):
     __tablename__ = "days"
@@ -55,5 +56,14 @@ class Booking(Base):
     time_slot: Mapped["TimeSlot"] = relationship("TimeSlot", back_populates="bookings")
 
 
+class Admin(Base):
+    __tablename__ = "admins"
 
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"))
+    bot_id: Mapped[int] = mapped_column(BigInteger)
+    user: Mapped["User"] = relationship("User", back_populates="admins")
 
+class Channel(Base):
+    __tablename__ = "channels"
+    bot_id: Mapped[int] = mapped_column(BigInteger)
+    channel_id: Mapped[int] = mapped_column(BigInteger)

@@ -6,11 +6,13 @@ from scheduler.scheduler_holder import SchedulerHolder
 from reminder.daily_reminder import restart_reminder
 from tg.bot_holder import BotAppHolder
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
-from tg.handlers import start, button_handler
-from tg.tg_func_service import update_command, who_am_i_command, backup_handler
+from tg.handlers import start, button_handler, process_channel_msg, process_add_admin, process_remove_admin
+from tg.tg_func_service import update_command, backup_handler
 from jobs.jobs import restart_shared_jobs
 import asyncio
 import signal
+from settings.settings import settings
+from services.service_factory import ServiceFactory
 
 def signal_handler(list_stop_event:List[asyncio.Event]):
     print("\nПолучен сигнал остановки (Ctrl+C)")
@@ -45,12 +47,10 @@ async def run_bot(token:str, stop_event:asyncio.Event):
     application = Application.builder().token(token).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", start))
+    application.add_handler(CommandHandler(settings.add_admin_command, process_add_admin))
+    application.add_handler(CommandHandler(settings.rm_admin_command, process_remove_admin))
     application.add_handler(CallbackQueryHandler(button_handler))
-    
-    if settings.bot_who_am_i_active:
-        application.add_handler(CommandHandler(settings.bot_who_am_i_command, who_am_i_command))
-        application.add_handler(MessageHandler(filters.TEXT & filters.ChatType.CHANNEL, who_am_i_command))
-    
+    application.add_handler(MessageHandler(filters.TEXT & filters.ChatType.CHANNEL, process_channel_msg))
     
     if settings.bot_update_active:
         application.add_handler(CommandHandler(settings.bot_update_command, update_command))
@@ -67,11 +67,8 @@ async def run_bot(token:str, stop_event:asyncio.Event):
     await stop_event.wait()
 
     message = BOT_STOP_NOTIFICATION.format(date = datetime.datetime.now(), bot_id = application.bot.id, bot_username = application.bot.username)
-    await application.bot.send_message(
-        chat_id=settings.telegram_channel_id,
-        text=message,
-        parse_mode=ParseMode.HTML
-    )
+    notification_service = await ServiceFactory.get_notification_service(application.bot.id)
+    await notification_service.send_notification_to_channel(message,parse_mode=ParseMode.HTML)
 
     await application.updater.stop()
     await application.stop()
@@ -87,14 +84,9 @@ async def on_startup(application: Application):
         await SchedulerHolder.init_scheduler()
         await restart_reminder(bot.id, await SchedulerHolder.get_scheduler_async())
 
-        channel_id = get_channel_id()
-
         message = BOT_START_NOTIFICATION.format(date = datetime.datetime.now(), bot_id = bot.id, bot_username = bot.username)
-        await bot.send_message(
-            chat_id=channel_id,
-            text=message,
-            parse_mode=ParseMode.HTML
-        )
+        notification_service = await ServiceFactory.get_notification_service(application.bot.id)
+        await notification_service.send_notification_to_channel(message,parse_mode=ParseMode.HTML)
         
         print(f"🟢 Бот {bot.username} запущен")
     except Exception as e:
